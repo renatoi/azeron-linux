@@ -28,7 +28,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libhidapi-dev libusb-1.0-0-dev p7zip-full rpm
+          sudo apt-get install -y libhidapi-dev libusb-1.0-0-dev libudev-dev p7zip-full rpm
 
       - name: Install npm dependencies
         run: npm install
