@@ -266,6 +266,14 @@ azeron-linux/
 - [noreza](https://github.com/Caedis/noreza) — Linux input mapper for Azeron (alternative approach)
 - [azeron-cli](https://github.com/cozyGalvinism/azeron-cli) — early Rust-based protocol reverse engineering
 
+## Disclaimer
+
+THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. USE AT YOUR OWN RISK. The authors are not responsible for any damage to hardware, misconfiguration of devices, data loss, or any other harm resulting from the use of this software, including but not limited to failed firmware updates.
+
+This project is not affiliated with, endorsed by, or sponsored by Azeron SIA. "Azeron" is a trademark of Azeron SIA. All trademarks belong to their respective owners.
+
 ## License
 
-This is an unofficial repackage for personal use. The original Azeron Software is proprietary. Firmware binaries are property of Azeron LTD.
+This is an unofficial repackage for personal and educational use, provided under fair use for interoperability purposes. The original Azeron Software is proprietary software by Azeron SIA. Firmware binaries are property of Azeron LTD. No proprietary source code has been modified or reverse-engineered — only minimal binary patches are applied to enable Linux platform compatibility.
+
+If you are a representative of Azeron and have concerns about this project, please open an issue or contact the maintainer directly.
