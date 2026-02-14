@@ -84,8 +84,7 @@
       "recommends": ["dfu-util"]
     },
     "rpm": {
-      "depends": ["hidapi", "libusb1"],
-      "recommends": ["dfu-util"]
+      "depends": ["hidapi", "libusb1", "dfu-util"]
     },
     "pacman": {
       "depends": [
