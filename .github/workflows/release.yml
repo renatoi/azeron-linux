@@ -1,0 +1,133 @@
+name: Build & Release
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday at 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Force build even if no upstream update'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libhidapi-dev libusb-1.0-0-dev p7zip-full rpm
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Check for upstream update
+        id: check
+        run: |
+          set +e
+          bash scripts/check-update.sh
+          EXIT_CODE=$?
+          set -e
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "update=false" >> "$GITHUB_OUTPUT"
+            echo "Up to date, no new version."
+          elif [ $EXIT_CODE -eq 2 ]; then
+            echo "update=true" >> "$GITHUB_OUTPUT"
+            echo "New upstream version available."
+          else
+            echo "::error::check-update.sh failed with exit code $EXIT_CODE"
+            exit 1
+          fi
+
+      - name: Determine if build is needed
+        id: should_build
+        run: |
+          if [ "${{ steps.check.outputs.update }}" = "true" ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            echo "mode=update" >> "$GITHUB_OUTPUT"
+          elif [ "${{ inputs.force_build }}" = "true" ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            echo "mode=force" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            echo "No build needed."
+          fi
+
+      - name: Download, extract, patch, and build (update)
+        if: steps.should_build.outputs.build == 'true' && steps.should_build.outputs.mode == 'update'
+        run: bash scripts/check-update.sh --apply
+
+      - name: Build packages (force, no update)
+        if: steps.should_build.outputs.build == 'true' && steps.should_build.outputs.mode == 'force'
+        run: |
+          cd app && npm install node-hid@2.2.0 && cd ..
+          npx @electron/rebuild -f -w node-hid -m app -v 30.0.9
+          npm run build
+
+      - name: Read version from manifest
+        if: steps.should_build.outputs.build == 'true'
+        id: version
+        run: |
+          VERSION=$(grep -oP '"version":\s*"\K[^"]+' build-manifest.json)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Building release for v$VERSION"
+
+      - name: Commit updated files
+        if: steps.should_build.outputs.build == 'true' && steps.should_build.outputs.mode == 'update'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Update to upstream v${{ steps.version.outputs.version }}"
+            git push
+          fi
+
+      - name: Create release
+        if: steps.should_build.outputs.build == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="v${VERSION}"
+
+          # Delete existing tag/release if force rebuilding same version
+          if gh release view "$TAG" &>/dev/null; then
+            echo "Release $TAG already exists, deleting for rebuild..."
+            gh release delete "$TAG" --yes --cleanup-tag
+          fi
+
+          # Tag and release
+          git tag -f "$TAG"
+          git push origin "$TAG" --force
+
+          gh release create "$TAG" \
+            --title "Azeron Software v${VERSION} for Linux" \
+            --generate-notes \
+            output/azeron-software-*.AppImage \
+            output/azeron-software-*.deb \
+            output/azeron-software-*.rpm
+
+      - name: Publish to AUR
+        if: steps.should_build.outputs.build == 'true'
+        uses: KSXGitHub/github-actions-deploy-aur@v3
+        with:
+          pkgname: azeron-software
+          pkgbuild: ./PKGBUILD
+          commit_username: github-actions[bot]
+          commit_email: github-actions[bot]@users.noreply.github.com
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "Update to v${{ steps.version.outputs.version }}"

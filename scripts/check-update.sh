@@ -59,7 +59,7 @@ echo ""
 if [ "${1:-}" != "--apply" ]; then
     echo "Run with --apply to download and rebuild automatically:"
     echo "  bash scripts/check-update.sh --apply"
-    exit 1
+    exit 2  # exit 2 = update available (0 = up to date, 1 = error)
 fi
 
 # --- Auto-update mode ---
@@ -183,6 +183,12 @@ EOF
 
 # Update version in root package.json
 sed -i "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$UPSTREAM_VERSION\"/" "$PROJECT_DIR/package.json"
+
+# Update PKGBUILD pkgver
+if [ -f "$PROJECT_DIR/PKGBUILD" ]; then
+    sed -i "s/^pkgver=.*/pkgver=$UPSTREAM_VERSION/" "$PROJECT_DIR/PKGBUILD"
+    echo "Updated PKGBUILD pkgver to $UPSTREAM_VERSION"
+fi
 
 # Build
 echo ""

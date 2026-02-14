@@ -9,7 +9,9 @@
     "rebuild": "electron-rebuild -f -w node-hid -m app",
     "build": "npm run patch && electron-builder --linux",
     "build:appimage": "npm run patch && electron-builder --linux AppImage",
-    "build:pacman": "npm run patch && electron-builder --linux pacman"
+    "build:pacman": "npm run patch && electron-builder --linux pacman",
+    "build:deb": "npm run patch && electron-builder --linux deb",
+    "build:rpm": "npm run patch && electron-builder --linux rpm"
   },
   "devDependencies": {
     "@electron/rebuild": "^3.7.1",
@@ -28,11 +30,19 @@
     "linux": {
       "target": [
         {
-          "target": "pacman",
+          "target": "AppImage",
           "arch": ["x64"]
         },
         {
-          "target": "AppImage",
+          "target": "deb",
+          "arch": ["x64"]
+        },
+        {
+          "target": "rpm",
+          "arch": ["x64"]
+        },
+        {
+          "target": "pacman",
           "arch": ["x64"]
         }
       ],
@@ -68,6 +78,14 @@
           "to": "update-notes.json"
         }
       ]
+    },
+    "deb": {
+      "depends": ["libhidapi-hidraw0", "libusb-1.0-0"],
+      "recommends": ["dfu-util"]
+    },
+    "rpm": {
+      "depends": ["hidapi", "libusb1"],
+      "recommends": ["dfu-util"]
     },
     "pacman": {
       "depends": [

@@ -18,20 +18,62 @@ Unofficial Linux repackage of the [Azeron](https://azeron.eu) keypad configurati
 sudo pacman -S --needed hidapi libusb dfu-util
 ```
 
+**Debian / Ubuntu:**
+
+```bash
+sudo apt install libhidapi-hidraw0 libusb-1.0-0 dfu-util
+```
+
+**Fedora:**
+
+```bash
+sudo dnf install hidapi libusb1 dfu-util
+```
+
+**openSUSE:**
+
+```bash
+sudo zypper install libhidapi-hidraw0 libusb-1_0-0 dfu-util
+```
+
 `dfu-util` is only required for firmware updates.
 
 ## Installation
 
+Releases are built automatically — a weekly CI job checks for new upstream Azeron versions and publishes updated packages to the [releases page](https://github.com/renatoi/azeron-linux/releases).
+
 ### Option A: AppImage (any distro)
 
-Download the AppImage from the [releases page](https://github.com/renatoi/azeron-linux/releases), make it executable, and run:
+Download the latest `.AppImage` from the [releases page](https://github.com/renatoi/azeron-linux/releases), make it executable, and run:
 
 ```bash
-chmod +x azeron-software-1.5.6-x86_64.AppImage
-./azeron-software-1.5.6-x86_64.AppImage
+chmod +x azeron-software-*-x64.AppImage
+./azeron-software-*-x64.AppImage
 ```
 
-### Option B: makepkg (Arch Linux)
+### Option B: .deb (Debian / Ubuntu)
+
+Download the latest `.deb` from the [releases page](https://github.com/renatoi/azeron-linux/releases) and install:
+
+```bash
+sudo dpkg -i azeron-software-*-amd64.deb
+```
+
+### Option C: .rpm (Fedora / openSUSE)
+
+Download the latest `.rpm` from the [releases page](https://github.com/renatoi/azeron-linux/releases) and install:
+
+```bash
+sudo rpm -i azeron-software-*-x86_64.rpm
+```
+
+### Option D: AUR (Arch Linux)
+
+```bash
+yay -S azeron-software
+```
+
+### Option E: makepkg (Arch Linux, from source)
 
 ```bash
 git clone https://github.com/renatoi/azeron-linux.git
@@ -57,9 +99,30 @@ sudo udevadm trigger
 
 ### Quick start
 
+Install build dependencies for your distro:
+
+**Arch Linux:**
+
 ```bash
 sudo pacman -S --needed hidapi libusb nodejs npm p7zip
-git clone git@github.com:renatoi/azeron-linux.git
+```
+
+**Debian / Ubuntu:**
+
+```bash
+sudo apt install libhidapi-dev libusb-1.0-0-dev nodejs npm p7zip-full
+```
+
+**Fedora:**
+
+```bash
+sudo dnf install hidapi-devel libusb1-devel nodejs npm p7zip
+```
+
+Then clone and build:
+
+```bash
+git clone https://github.com/renatoi/azeron-linux.git
 cd azeron-linux
 bash scripts/setup.sh
 npm run build
@@ -72,8 +135,7 @@ The setup script installs npm dependencies, rebuilds `node-hid` for Linux, appli
 If you prefer to run each step yourself:
 
 ```bash
-# 1. Install system and npm dependencies
-sudo pacman -S --needed hidapi libusb nodejs npm
+# 1. Install system and npm dependencies (see Quick start above for your distro)
 npm install
 
 # 2. Install app dependencies and rebuild node-hid for Electron 30
@@ -110,10 +172,10 @@ npm start -- --no-sandbox
 
 ## Checking for Updates
 
-The update script checks the Azeron S3 feed for new releases and compares against the version recorded in `build-manifest.json`:
+New upstream versions are detected and released automatically via GitHub Actions (weekly on Mondays). You can also check manually:
 
 ```bash
-# Check only
+# Check only (exit code 0 = up to date, 2 = update available)
 bash scripts/check-update.sh
 
 # Check, download, rebuild, and repackage automatically
@@ -126,7 +188,7 @@ With `--apply`, the script will:
 3. Replace `app/dist`, `app/node_modules`, and firmware files
 4. Rebuild `node-hid` for Linux
 5. Apply all Linux patches (fails loudly if a patch no longer matches)
-6. Update `build-manifest.json` with the new version
+6. Update `build-manifest.json`, `package.json`, and `PKGBUILD` with the new version
 7. Build AppImage and pacman packages
 
 If any step fails, it reports all errors at the end.
@@ -166,7 +228,7 @@ ELECTRON_DISABLE_SANDBOX=1 ./azeron-software-1.5.6-x86_64.AppImage
 
 ### Firmware updates
 
-Firmware updates require `dfu-util` installed on the system. The device enters DFU mode (STM32 bootloader at `0483:df11`) during the update. The udev rules already grant access to this bootloader device.
+Firmware updates require `dfu-util` installed on the system (`pacman -S dfu-util`, `apt install dfu-util`, or `dnf install dfu-util`). The device enters DFU mode (STM32 bootloader at `0483:df11`) during the update. The udev rules already grant access to this bootloader device.
 
 ## How It Works
 
@@ -178,6 +240,8 @@ This project extracts the original app from the Windows installer, rebuilds the 
 
 ```
 azeron-linux/
+  .github/workflows/
+    release.yml           # CI: weekly update check + build + release
   app/
     dist/                 # Webpack bundles (unpatched; patched during build)
     src/resources/        # Tray icon, proving-ground profiles
