@@ -68,6 +68,8 @@ jobs:
 
       - name: Download, extract, patch, and build (update)
         if: steps.should_build.outputs.build == 'true' && steps.should_build.outputs.mode == 'update'
+        env:
+          BUILD_TARGETS: AppImage deb rpm
         run: bash scripts/check-update.sh --apply
 
       - name: Build packages (force, no update)
@@ -75,7 +77,7 @@ jobs:
         run: |
           cd app && npm install node-hid@2.2.0 && cd ..
           npx @electron/rebuild -f -w node-hid -m app -v 30.0.9
-          npm run build
+          npm run patch && npx electron-builder --linux AppImage deb rpm
 
       - name: Read version from manifest
         if: steps.should_build.outputs.build == 'true'

@@ -193,7 +193,8 @@ fi
 # Build
 echo ""
 echo "=== Building packages ==="
-npx electron-builder --linux 2>&1 || {
+BUILD_TARGETS="${BUILD_TARGETS:-AppImage deb rpm pacman}"
+npx electron-builder --linux $BUILD_TARGETS 2>&1 || {
     error "electron-builder failed"
 }
 
