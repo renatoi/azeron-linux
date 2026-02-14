@@ -1,0 +1,73 @@
+/*!
+ * normalize-path <https://github.com/jonschlinkert/normalize-path>
+ *
+ * Copyright (c) 2014-2018, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+
+/*!
+ * urlsafe-base64
+ */
+
+/*! crc32.js (C) 2014-present SheetJS -- http://sheetjs.com */
+
+/*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */
+
+/*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
+
+/**
+ * @license
+ * Lodash <https://lodash.com/>
+ * Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */
+
+/**
+ * Archiver Core
+ *
+ * @ignore
+ * @license [MIT]{@link https://github.com/archiverjs/node-archiver/blob/master/LICENSE}
+ * @copyright (c) 2012-2014 Chris Talkington, contributors.
+ */
+
+/**
+ * Archiver Vending
+ *
+ * @ignore
+ * @license [MIT]{@link https://github.com/archiverjs/node-archiver/blob/master/LICENSE}
+ * @copyright (c) 2012-2014 Chris Talkington, contributors.
+ */
+
+/**
+ * JSON Format Plugin
+ *
+ * @module plugins/json
+ * @license [MIT]{@link https://github.com/archiverjs/node-archiver/blob/master/LICENSE}
+ * @copyright (c) 2012-2014 Chris Talkington, contributors.
+ */
+
+/**
+ * TAR Format Plugin
+ *
+ * @module plugins/tar
+ * @license [MIT]{@link https://github.com/archiverjs/node-archiver/blob/master/LICENSE}
+ * @copyright (c) 2012-2014 Chris Talkington, contributors.
+ */
+
+/**
+ * ZIP Format Plugin
+ *
+ * @module plugins/zip
+ * @license [MIT]{@link https://github.com/archiverjs/node-archiver/blob/master/LICENSE}
+ * @copyright (c) 2012-2014 Chris Talkington, contributors.
+ */
+
+/**
+ * ZipStream
+ *
+ * @ignore
+ * @license [MIT]{@link https://github.com/archiverjs/node-zip-stream/blob/master/LICENSE}
+ * @copyright (c) 2014 Chris Talkington, contributors.
+ */

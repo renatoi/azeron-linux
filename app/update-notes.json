@@ -1,0 +1,474 @@
+{
+    "1.5.6": {
+        "version": "1.5.6",
+        "firmware": {
+            "Classic": "89",
+            "Cyborg": "89",
+            "Cyro": "102",
+            "Cyro Lefty": "102",
+            "Classic Tansy": "97",
+            "Cyborg Tansy": "96",
+            "Cyborg V2": "100",
+            "Keyzen": "100"
+        },
+        "featureNotes": ["Added support for Keyzen."],
+        "fixedNotes": []
+    },
+    "1.5.5": {
+        "version": "1.5.5",
+        "firmware": {
+            "Classic": "89",
+            "Cyborg": "89",
+            "Cyro": "102",
+            "Cyro Lefty": "102",
+            "Classic Tansy": "97",
+            "Cyborg Tansy": "96",
+            "Cyborg V2": "100"
+        },
+        "featureNotes": [],
+        "fixedNotes": [
+            "\"Button throttle\" bug fixes and improvements have been added. This should resolve most \"keys getting stuck\" issues.",
+            "Layering issue fixed, where sometimes \"Toggle on Hold\" option was not properly switching back to previously active profile.",
+            "Polling rate adjustments and fixes. Issues with inconsistent polling rates across all devices have been resolved and we are continuing on improving that in the future as well."
+        ]
+    },
+    "1.5.4": {
+        "version": "1.5.4",
+        "firmware": {
+            "Classic": "88",
+            "Cyborg": "88",
+            "Cyro": "101",
+            "Cyro Lefty": "101",
+            "Classic Tansy": "96",
+            "Cyborg Tansy": "95",
+            "Cyborg V2": "99"
+        },
+        "featureNotes": [
+            "A new (experimental) performance firmware option has been added for v2 devices. This mode allows the devices to achieve a 1000Hz polling rate across all available modes, ensuring responsive performance and smoother operation.",
+            "An analog stick trigger point adjustment option has been added for v2 devices.  (works only for specific analog stick types).",
+            "Calibration now offers three methods to assist in fine-tuning your stick. These methods provide more automated calibration options for specific scenarios. For instance, when using a hall joystick with a restrictor ring, it is recommended to use the `Center Offset` calibration method.",
+            "Windows Startup setting now includes an option to start the software minimized."
+        ],
+        "fixedNotes": []
+    },
+    "1.5.3": {
+        "version": "1.5.3",
+        "firmware": {
+            "Classic": "88",
+            "Compact": "88",
+            "Cyborg": "88",
+            "Cyro": "100",
+            "Cyro Lefty": "100",
+            "Classic Tansy": "95",
+            "Compact Tansy": "94",
+            "Cyborg Tansy": "94",
+            "Cyborg V2": "97"
+        },
+        "featureNotes": [
+            "Cyborg V2 support.",
+            "Update window now shows update progress in percentages.",
+            "Software now works better with reWASD 7.3.0.",
+            "Logging has been improved by adding more detailed information about errors and crashes.",
+            "A global analog angle setter has been added for Teensy devices (sets an angle for every profile separately - an alternative for global angle feature, that is available for other devices).",
+            "X ,Y axis preview added in analog calibration adjustment settings.",
+            "A popup window has been added for displaying copied profile string.",
+            "OBM profile copying process has been improved for better performance."
+        ],
+        "fixedNotes": [
+            "Sleep and wake-up reconnecting issues resulting in errors have been fixed.",
+            "The default linked profile was disappearing after any software profile deletion.",
+            "While the key binding window was open, switching profiles with the profile switch button was causing the software to crash.",
+            "The multi-device firmware update window was disappearing while switching the active device.",
+            "Secondary diagonal keys were sometimes not working correctly when using 8-directional input mode.",
+            "Analog settings sometimes would not save during backup profile creation.",
+            "Mouse scroll button bind was causing a delay in short key execution.",
+            "Macro durations were not saved after restarting."
+        ]
+    },
+    "1.5.2": {
+        "version": "1.5.2",
+        "firmware": {
+            "Classic": "86",
+            "Compact": "86",
+            "Cyborg": "86",
+            "Cyro": "98",
+            "Cyro Lefty": "98",
+            "Classic Tansy": "93",
+            "Compact Tansy": "93",
+            "Cyborg Tansy": "92"
+        },
+        "notes": [
+            "Improved analog calibration offset calculation.",
+            "Resolved a minor UI issue in the profile list."
+        ]
+    },
+    "1.5.1": {
+        "version": "1.5.1",
+        "firmware": {
+            "Classic": "86",
+            "Compact": "86",
+            "Cyborg": "86",
+            "Cyro": "97",
+            "Cyro Lefty": "97",
+            "Classic Tansy": "93",
+            "Compact Tansy": "93",
+            "Cyborg Tansy": "92"
+        },
+        "notes": ["Fixed Cyro OBM binding issue."]
+    },
+    "1.5.0": {
+        "version": "1.5.0",
+        "firmware": {
+            "Classic": "86",
+            "Compact": "86",
+            "Cyborg": "86",
+            "Cyro": "96",
+            "Cyro Lefty": "96",
+            "Classic Tansy": "93",
+            "Compact Tansy": "93",
+            "Cyborg Tansy": "92"
+        },
+        "notes": [
+            "Reworked analog stick logic to prepare for future improvements. You shouldn't see any changes right now, but yell at us if something is broken.",
+            "Analog stick can now be calibrated with the restrictor ring.",
+            "Automatic software profile switching on game launch - the first official community-voted feature is here - see Discord Surveys!",
+            "System Tray Icon with some functionality has been added.",
+            "Software profiles now have a right-click context menu.",
+            "Profile list width can now be changed by dragging.",
+            "Implemented single-profile export/import.",
+            "Added fresh software themes.",
+            "Added an analog wheel for all devices.",
+            "Fixed sleep issues where the device was not waking up correctly.",
+            "Added RGB LEDs.",
+            "Added analog cones for V2 devices.",
+            "Added an analog throttle.",
+            "Added a mouse stick for V2 devices.",
+            "Added an analog deadzone representation.",
+            "Fixed an issue where the macro would not release keys after the button was released.",
+            "Added global angle settings for the analog stick."
+        ]
+    },
+    "1.4.1": {
+        "version": "1.4.1",
+        "firmware": {
+            "Classic": "80",
+            "Compact": "80",
+            "Cyborg": "80",
+            "Cyro": "89",
+            "Cyro Lefty": "89",
+            "Classic Tansy ": "87",
+            "Compact Tansy ": "87",
+            "Cyborg Tansy ": "86"
+        },
+        "notes": ["Resolved a USB descriptor error that was causing Windows boot issues."]
+    },
+    "1.4.0": {
+        "version": "1.4.0",
+        "firmware": {
+            "Classic": "80",
+            "Compact": "80",
+            "Cyborg": "80",
+            "Cyro": "88",
+            "Cyro Lefty": "88",
+            "Classic Tansy": "86",
+            "Compact Tansy": "86",
+            "Cyborg Tansy": "85"
+        },
+        "notes": [
+            "New and improved macro user interface.",
+            "Added ability to copy macros between buttons.",
+            "Wild XInput, Direct Input steps have appeared in macros.",
+            "Better DPI scaling (hopefully) for bigger screens.",
+            "Button keybind size configuration options.",
+            "Software profile drag and drop ordering."
+        ]
+    },
+    "1.3.0": {
+        "version": "1.3.0",
+        "firmware": {
+            "Classic": "79",
+            "Compact": "79",
+            "Cyborg": "79",
+            "Cyro": "87",
+            "Cyro Lefty": "87",
+            "Classic Tansy ": "85",
+            "Compact Tansy ": "85",
+            "Cyborg Tansy ": "84"
+        },
+        "notes": [
+            "Moved key binding to a popup. This is the way, we have spoken.",
+            "Added a 'start with Windows' option.",
+            "Added helpful tooltips. See if you can find them all! For no reason. There is no prize.",
+            "Resolved scaling issues.",
+            "Resolved an issue where the analog stick sometimes stopped working when layering profiles."
+        ]
+    },
+    "1.2.6": {
+        "version": "1.2.6",
+        "firmware": {
+            "Classic": "78",
+            "Compact": "78",
+            "Cyborg": "78",
+            "Cyro": "86",
+            "Cyro Lefty": "86",
+            "Classic Tansy ": "84",
+            "Compact Tansy ": "84",
+            "Cyborg Tansy ": "83"
+        },
+        "notes": [
+            "Added Xbox 360 & Keyboard analog type, specifically requested by users who were experiencing issues where sidestep and driving wasn't working in specific cases.",
+            "Fixed the reWASD issue that caused the analog stick to get stuck.",
+            "Improved the logic for device firmware updates by adding additional device type checks, enhancing the update process to address previous failures."
+        ]
+    },
+    "1.2.5": {
+        "version": "1.2.5",
+        "firmware": {
+            "Classic": "77",
+            "Compact": "77",
+            "Cyborg": "77",
+            "Cyro": "85",
+            "Cyro Lefty": "85",
+            "Classic Tansy ": "83",
+            "Compact Tansy ": "83",
+            "Cyborg Tansy ": "82"
+        },
+        "notes": [
+            "Improved import and export behavior for profiles within the software. No more cheeky business with import empty profiles or exporting when you have no profiles.",
+            "Fixed an issue where the thumbstick was not resetting properly when users were switching between different thumbstick modes or profiles.",
+            "Resolved an issue where read-only mode messages were still appearing even after firmware update. ",
+            "Fixed an issue with long and double press delay limits that were affecting the activation of layering and macros.",
+            "Fixed an issue where Xbox buttons were not working correctly in some games."
+        ]
+    },
+    "1.2.4": {
+        "version": "1.2.4",
+        "firmware": {
+            "Classic": "76",
+            "Compact": "76",
+            "Cyborg": "76",
+            "Cyro": "84",
+            "Cyro Lefty": "84",
+            "Classic Tansy ": "82",
+            "Compact Tansy ": "82",
+            "Cyborg Tansy ": "81"
+        },
+        "notes": [
+            "Improved corrupt hardware profile handling, in case you find an old keypad in a drawer somewhere.",
+            "Cyro global sensor settings are now saved after restart.",
+            "If your firmware does not match the requirements for the current software version, the software will  launch in readonly mode, until you update the firmware to the supported latest version. This will help to avoid profile corruption. Don't worry - once you update, all profiles will still be there and working. If not, let us know."
+        ]
+    },
+    "1.2.3": {
+        "version": "1.2.3",
+        "firmware": {
+            "Classic": "76",
+            "Compact": "76",
+            "Cyborg": "76",
+            "Cyro": "84",
+            "Cyro Lefty": "84",
+            "Classic Tansy ": "82",
+            "Compact Tansy ": "82",
+            "Cyborg Tansy ": "81"
+        },
+        "notes": [
+            "Improved console support. Games that support keyboard & mouse on consoles, should work with Azeron. Works only if mouse & keyboard buttons are bound to the On-board profile.",
+            "Fixed edge cases where profile import would not work correctly. But work continues. More edges, more cases.",
+            "Fixed an issue where the analog stick was not returning to its starting position in the UI.",
+            "Improved compatibility with reWASD 6.5.1.",
+            "Fixed an issue where Cyro LED settings were not saved after a restart."
+        ]
+    },
+    "1.2.2": {
+        "version": "1.2.2",
+        "firmware": {
+            "Classic": "75",
+            "Compact": "75",
+            "Cyborg": "75",
+            "Cyro": "83",
+            "Cyro Lefty": "83",
+            "Classic Tansy ": "81",
+            "Compact Tansy ": "81",
+            "Cyborg Tansy ": "80"
+        },
+        "notes": ["Azeron Cyro Lefty support."]
+    },
+    "1.2.1": {
+        "version": "1.2.1",
+        "firmware": {
+            "Classic": "74",
+            "Compact": "74",
+            "Cyborg": "74",
+            "Cyro": "82",
+            "Classic Tansy ": "80",
+            "Compact Tansy ": "80",
+            "Cyborg Tansy ": "79"
+        },
+        "notes": ["Fixed keypad joystick OBM copy enabling other trigger types."]
+    },
+    "1.2.0": {
+        "version": "1.2.0",
+        "firmware": {
+            "Classic": "74",
+            "Compact": "74",
+            "Cyborg": "74",
+            "Cyro": "82",
+            "Classic Tansy ": "80",
+            "Compact Tansy ": "80",
+            "Cyborg Tansy ": "79"
+        },
+        "notes": [
+            "Azeron Cyro support.",
+            "Press once to hold the bind, press again, to release it.",
+            "Input sequence - trigger different keyboard binds on each button press, cyclically (software profiles only).",
+            "Fixed edges cases when the analog stick wouldn't work.",
+            "Fixed edge cases when profile transfer would fail.",
+            "And more! Minor ones. The ones developers log as `minor fix`.",
+            "Smoother mouse scroll wheel when bound to buttons.",
+            "Better default focus behavior, for faster binding.",
+            "Other misc improvements. See if you can spot them. If you can't, that's good too! It means we took away some stuff that was just getting away."
+        ]
+    },
+    "1.1.2": {
+        "version": "1.1.2",
+        "firmware": {
+            "Classic": "73",
+            "Compact": "73",
+            "Cyborg": "73",
+            "Cyro": "79",
+            "Classic Tansy ": "79",
+            "Compact Tansy ": "79",
+            "Cyborg Tansy ": "78"
+        },
+        "notes": [
+            "Fixed an issue where some button binds were not working correctly in software mode.",
+            "Fixed Cyro de-acceleration behavior."
+        ]
+    },
+    "1.1.1": {
+        "version": "1.1.1",
+        "firmware": {
+            "Classic": "72",
+            "Compact": "72",
+            "Cyborg": "72",
+            "Cyro": "79",
+            "Classic Tansy ": "79",
+            "Compact Tansy ": "79",
+            "Cyborg Tansy ": "78"
+        },
+        "notes": ["Fixed an issue where macro & joystick were not working simultaneously."]
+    },
+    "1.1.0": {
+        "version": "1.1.0",
+        "firmware": {
+            "Classic": "71",
+            "Compact": "71",
+            "Cyborg": "71",
+            "Cyro": "79",
+            "Classic Tansy ": "79",
+            "Compact Tansy ": "79",
+            "Cyborg Tansy ": "78"
+        },
+        "notes": [
+            "One at a time multi device support.",
+            "Improved device performance.",
+            "Improved device connection times.",
+            "Fixed an issue where software button was not releasing correctly.",
+            "Fixed an issue with software profile joystick button."
+        ]
+    },
+    "1.0.4": {
+        "version": "1.0.4",
+        "firmware": {
+            "Classic": "70",
+            "Compact": "70",
+            "Cyborg": "70",
+            "Cyro": "78",
+            "Classic Tansy ": "78",
+            "Compact Tansy ": "78",
+            "Cyborg Tansy ": "77"
+        },
+        "notes": [
+            "Fixed software performance issues with large amounts of profiles.",
+            "Fixed update available pop-up.",
+            "Added undo button for settings image change.",
+            "Fixed some issues when importing profiles from the old software.",
+            "Fixed crash report issues after system shutdown",
+            "Sticky profile search bar when profiles are scrollable"
+        ]
+    },
+    "1.0.3": {
+        "version": "1.0.3",
+        "firmware": {
+            "Classic": "70",
+            "Compact": "70",
+            "Cyborg": "70",
+            "Cyro": "78",
+            "Classic Tansy ": "78",
+            "Compact Tansy ": "78",
+            "Cyborg Tansy ": "77"
+        },
+        "notes": [
+            "Improved device connection times.",
+            "Hardware profiles backed up as software profiles before firmware updates.",
+            "Added software profile search.",
+            "Fixed OBM copy overwriting software profile binds.",
+            "Added option to hide button numbering.",
+            "Fixed confirmation pop-up outer click bug.",
+            "Changed default macro timeout.",
+            "Fixed current mouse bind not showing in binding tab.",
+            "Fixed some issues when importing profiles from the old software."
+        ]
+    },
+    "1.0.2": {
+        "version": "1.0.2",
+        "firmware": {
+            "Classic": "70",
+            "Compact": "70",
+            "Cyborg": "70",
+            "Cyro": "76",
+            "Classic Tansy ": "78",
+            "Compact Tansy ": "78",
+            "Cyborg Tansy ": "77"
+        },
+        "notes": [
+            "Fixed lefty layout setting reset after reload.",
+            "Fixed Classic keypad rewasd compatibility."
+        ]
+    },
+    "1.0.1": {
+        "version": "1.0.1",
+        "firmware": {
+            "Classic": "69",
+            "Compact": "69",
+            "Cyborg": "69",
+            "Cyro": "76",
+            "Classic Tansy ": "78",
+            "Compact Tansy ": "78",
+            "Cyborg Tansy ": "77"
+        },
+        "notes": [
+            "Fixed keyboard bind focus absence on first button select.",
+            "Fixed Classic/Compact second profile 5-way button not working.",
+            "Fixed Win key combo bind sequence."
+        ]
+    },
+    "1.0.0": {
+        "version": "1.0.0",
+        "firmware": {
+            "Classic": "69",
+            "Compact": "69",
+            "Cyborg": "69",
+            "Cyro": "76",
+            "Classic Tansy ": "77",
+            "Compact Tansy ": "77",
+            "Cyborg Tansy ": "77"
+        },
+        "notes": [
+            "New, fresh user interface and experience.",
+            "Longpress and double press trigger types for buttons.",
+            "Automatic software and firmware updates.",
+            "Button mouse wheel bind."
+        ]
+    }
+}

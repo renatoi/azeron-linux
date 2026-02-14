@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build output
+output/
+
+# Windows artifacts
+app/dist/win-unpacked/
+
+# Source maps (large, not needed)
+*.js.map
+
+# Electron cache
+.electron/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/
+
+# Editor
+*.swp
+*.swo
+*~
+.idea/
+.vscode/

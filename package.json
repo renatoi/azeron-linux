@@ -1,0 +1,92 @@
+{
+  "name": "azeron-linux",
+  "version": "1.5.6",
+  "description": "Azeron Software repackaged for Linux",
+  "private": true,
+  "scripts": {
+    "start": "electron app",
+    "patch": "node scripts/patch-main.js",
+    "rebuild": "electron-rebuild -f -w node-hid -m app",
+    "build": "npm run patch && electron-builder --linux",
+    "build:appimage": "npm run patch && electron-builder --linux AppImage",
+    "build:pacman": "npm run patch && electron-builder --linux pacman"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.1",
+    "electron": "30.0.9",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.azeron.software",
+    "productName": "Azeron Software",
+    "artifactName": "azeron-software-${version}-${arch}.${ext}",
+    "directories": {
+      "app": "app",
+      "output": "output",
+      "buildResources": "build"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "pacman",
+          "arch": ["x64"]
+        },
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "Utility",
+      "desktop": {
+        "Name": "Azeron Software",
+        "Comment": "Configuration tool for Azeron keypads",
+        "Terminal": "false",
+        "Type": "Application",
+        "Categories": "Utility;HardwareSettings;"
+      },
+      "extraFiles": [
+        {
+          "from": "firmware",
+          "to": "firmware",
+          "filter": ["**/*.bin", "**/*.hex"]
+        },
+        {
+          "from": "app/src/resources/proving-ground-profiles",
+          "to": "src/resources/proving-ground-profiles"
+        },
+        {
+          "from": "app/src/resources/tray.png",
+          "to": "src/resources/tray.png"
+        },
+        {
+          "from": "assets/99-azeron.rules",
+          "to": "udev/99-azeron.rules"
+        },
+        {
+          "from": "app/update-notes.json",
+          "to": "update-notes.json"
+        }
+      ]
+    },
+    "pacman": {
+      "depends": [
+        "hidapi",
+        "libusb",
+        "dfu-util"
+      ]
+    },
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*",
+      "package.json",
+      "src/resources/proving-ground-profiles/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/node-hid/**",
+      "node_modules/usb/**",
+      "node_modules/@serialport/**"
+    ],
+    "publish": null
+  }
+}
