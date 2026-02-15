@@ -6,6 +6,6 @@
     "url": "https://azeron-public.s3.amazonaws.com/keypad-builds/azeron-setup-v1.5.6.exe"
   },
   "feed": "https://azeron-public.s3.amazonaws.com/keypad-builds/latest.yml",
-  "patches": 8,
+  "patches": 14,
   "buildDate": "2026-02-14"
 }

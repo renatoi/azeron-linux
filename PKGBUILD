@@ -1,17 +1,17 @@
 # Maintainer: Renato de Oliveira <renatoi at github>
 pkgname=azeron-software
 pkgver=1.5.6
-pkgrel=1
+pkgrel=3
 pkgdesc='Configuration tool for Azeron keypads (unofficial Linux repackage)'
 arch=('x86_64')
 url='https://github.com/renatoi/azeron-linux'
 license=('custom:proprietary')
-depends=('hidapi' 'libusb' 'gtk3' 'nss' 'alsa-lib')
+depends=('hidapi' 'libusb' 'gtk3' 'nss' 'alsa-lib' 'python' 'usbutils')
 makedepends=('npm' 'nodejs' 'p7zip')
 optdepends=('dfu-util: firmware updates')
 options=('!strip')
 _electron_ver=30.0.9
-source=("${pkgname}-${pkgver}.tar.gz::https://github.com/renatoi/azeron-linux/archive/refs/tags/v${pkgver}.tar.gz"
+source=("${pkgname}-${pkgver}-${pkgrel}.tar.gz::https://github.com/renatoi/azeron-linux/archive/refs/tags/v${pkgver}.tar.gz"
         "electron-${_electron_ver}.zip::https://github.com/electron/electron/releases/download/v${_electron_ver}/electron-v${_electron_ver}-linux-x64.zip")
 noextract=("electron-${_electron_ver}.zip")
 sha256sums=('SKIP'

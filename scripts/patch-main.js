@@ -95,6 +95,94 @@ patch(
   '"linux"!==process.platform&&e.app.setLoginItemSettings({openAtLogin:r,path:e.app.getPath("exe"),args:o?["--minimized"]:[]}),'
 );
 
+// Patch 9: Pad HID write buffers to 65 bytes for Linux hidraw
+// On Windows, the HID driver automatically pads short writes to the report size.
+// On Linux hidraw, writes are sent as-is. The Azeron device ignores short reports.
+// The app constructs [0, ...data] arrays without padding. We pad them to 65 bytes.
+// Text protocol write:
+patch(
+  "fix-hid-write-padding-text",
+  "const i=[0,...n.slice(r,Math.min(r+64+1,o))];try{r+=e.write(Buffer.from(i))-1}",
+  "const i=[0,...n.slice(r,Math.min(r+64+1,o))];while(i.length<65)i.push(0);try{r+=e.write(Buffer.from(i))-1}"
+);
+// Binary protocol write:
+patch(
+  "fix-hid-write-padding-binary",
+  "const o=[0,...t.slice(n,Math.min(n+64+1,r))];try{n+=e.write(Buffer.from(o))-1}",
+  "const o=[0,...t.slice(n,Math.min(n+64+1,r))];while(o.length<65)o.push(0);try{n+=e.write(Buffer.from(o))-1}"
+);
+
+// Patch 10: Fix profile activation on Linux
+// On Linux, SWITCH_PROFILE causes the device to USB disconnect and reconnect to apply
+// the new profile's HID configuration. The app's existing disconnect/reconnect handling
+// will detect the device reappearing and re-open it. No queue matcher changes needed.
+// The USB reset in patch 10b ensures the config interface works after reconnect.
+// We just need to remove the profile activation from the queue since the device will
+// disconnect and the queue would never get a response. Instead, send fire-and-forget.
+patch(
+  "fix-profile-activation",
+  'e.ipcMain.handle(sn,((e,t)=>{n.add((()=>{i.switchProfile(+t.profileId)}),{id:sn,sMatcher:[Is.PROFILE_INDEX],bMatcher:e=>gi(e).type===Yo.SWITCH_PROFILE})}))',
+  'e.ipcMain.handle(sn,((e,t)=>{i.switchProfile(+t.profileId)}))'
+);
+
+// Patch 10b: USB reset before HID open
+// On Linux, after a profile switch the device does a USB disconnect/reconnect.
+// After reconnect, the vendor-specific config interface (if04) is unresponsive until
+// a USB device reset (USBDEVFS_RESET ioctl) is sent. We do this before every HID open
+// to ensure the config interface is always ready.
+//
+// The USB reset uses python3+fcntl since Node.js has no built-in ioctl support.
+// The spawnSync call passes the Python code directly (no shell escaping needed).
+{
+  // Build the Python code as a JS string. When inserted into main-process.js:
+  // - \n becomes newline (Python needs real newlines for indentation)
+  // - \\d becomes \d (Python regex digit class)
+  const pyLines = [
+    "import fcntl,os,re,subprocess",
+    "try:",
+    " o=subprocess.check_output(['lsusb','-d','16d0:12f7']).decode()",
+    " m=re.search('Bus (\\\\d+) Device (\\\\d+):',o)",
+    " if m:",
+    "  p='/dev/bus/usb/'+m.group(1)+'/'+m.group(2)",
+    "  fd=os.open(p,os.O_WRONLY)",
+    "  fcntl.ioctl(fd,21780,0)",
+    "  os.close(fd)",
+    "except:",
+    " pass"
+  ].join("\\n");
+  const usbReset = '(()=>{try{require("child_process").spawnSync("python3",["-c","' + pyLines + '"])}catch(_ue){}})()';
+
+  patch(
+    "fix-usb-reset-on-connect",
+    'i=new Ol.HID(o.path),ys.info("HID Being opened!")',
+    usbReset + ',i=new Ol.HID(o.path),ys.info("HID Being opened!")'
+  );
+}
+
+// Patch 11: Silence console log spam in production
+// The Console transport is set to "debug" which floods stdout with JSON logs.
+// Change to "error" so only actual errors appear in the terminal when run from CLI.
+patch(
+  "silence-console-logs",
+  'new Zi.transports.Console({level:"debug",handleExceptions:!0})',
+  'new Zi.transports.Console({level:process.env.AZERON_LOG_LEVEL||"error",handleExceptions:!0})'
+);
+
+// Patch 12: Quit app when all windows are closed (Linux convention)
+// The app has no "window-all-closed" handler, so it keeps running after the window closes.
+// On Linux, node-hid's read thread does a blocking read() on hidraw. During shutdown,
+// the NAPI finalizer waits ~30s for that read to finish, then crashes (SIGABRT).
+// No JS-level exit (app.quit, process.exit, etc.) can avoid this because the read
+// thread blocks the event loop. Fix: spawn a detached "kill -9" process which
+// bypasses the blocked event loop entirely. The kernel releases all fds on death.
+patch(
+  "fix-quit-on-window-close",
+  'e.app.on("quit"',
+  'e.app.on("window-all-closed",(()=>{require("child_process").spawn("kill",["-9",String(process.pid)],{detached:true,stdio:"ignore"}).unref()})),e.app.on("quit"'
+);
+
+
+
 if (code === original) {
   console.log("No changes made (patches may have already been applied)");
   process.exit(0);

@@ -15,25 +15,25 @@ Unofficial Linux repackage of the [Azeron](https://azeron.eu) keypad configurati
 **Arch Linux:**
 
 ```bash
-sudo pacman -S --needed hidapi libusb dfu-util
+sudo pacman -S --needed hidapi libusb python usbutils dfu-util
 ```
 
 **Debian / Ubuntu:**
 
 ```bash
-sudo apt install libhidapi-hidraw0 libusb-1.0-0 dfu-util
+sudo apt install libhidapi-hidraw0 libusb-1.0-0 python3 usbutils dfu-util
 ```
 
 **Fedora:**
 
 ```bash
-sudo dnf install hidapi libusb1 dfu-util
+sudo dnf install hidapi libusb1 python3 usbutils dfu-util
 ```
 
 **openSUSE:**
 
 ```bash
-sudo zypper install libhidapi-hidraw0 libusb-1_0-0 dfu-util
+sudo zypper install libhidapi-hidraw0 libusb-1_0-0 python3 usbutils dfu-util
 ```
 
 `dfu-util` is only required for firmware updates.
@@ -153,7 +153,7 @@ npm run build
 
 ### Patches
 
-`node scripts/patch-main.js` applies 8 targeted string replacements to the minified `main-process.js`. The script fails with an error if any search string is not found, which signals that an upstream update changed something that needs attention.
+`node scripts/patch-main.js` applies 14 targeted string replacements to the minified `main-process.js`. The script fails with an error if any search string is not found, which signals that an upstream update changed something that needs attention.
 
 | Patch | Description |
 |-------|-------------|
@@ -163,6 +163,11 @@ npm run build
 | disable-auto-updater | Disable S3 auto-update (no Linux builds on their CDN) |
 | fix-dfu-util-name | Replace `dfu-util-static` with system `dfu-util` |
 | fix-login-items-1/2/3 | Skip `setLoginItemSettings` on Linux (unsupported API) |
+| fix-hid-write-padding-text/binary | Pad HID writes to 65 bytes (Linux hidraw doesn't auto-pad like Windows) |
+| fix-profile-activation | Fire-and-forget profile switch (device does USB reconnect to apply) |
+| fix-usb-reset-on-connect | USB device reset before HID open (fixes config interface after reconnect) |
+| silence-console-logs | Reduce console log level from debug to error |
+| fix-quit-on-window-close | Clean exit on window close (avoids node-hid NAPI crash on Linux) |
 
 ### Running in development mode
 
@@ -192,6 +197,10 @@ With `--apply`, the script will:
 7. Build AppImage and pacman packages
 
 If any step fails, it reports all errors at the end.
+
+## Known Limitations
+
+**Auto-update and beta participation**: The Settings page in the app shows "Auto update enabled" and "Beta Version Opt In?" checkboxes. These do not work on Linux — the auto-updater has been disabled since there are no Linux builds on Azeron's update server. To check for updates, see the [Checking for Updates](#checking-for-updates) section below, or watch the [releases page](https://github.com/renatoi/azeron-linux/releases) for new versions.
 
 ## Troubleshooting
 
@@ -225,6 +234,16 @@ Or set the environment variable:
 ```bash
 ELECTRON_DISABLE_SANDBOX=1 ./azeron-software-1.5.6-x86_64.AppImage
 ```
+
+### Verbose logging
+
+To enable debug logs when troubleshooting:
+
+```bash
+AZERON_LOG_LEVEL=debug azeron-software
+```
+
+Valid levels: `error` (default), `warn`, `info`, `debug`.
 
 ### Firmware updates
 
