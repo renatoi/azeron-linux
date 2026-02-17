@@ -66,7 +66,7 @@ package() {
 [Desktop Entry]
 Name=Azeron Software
 Comment=Configuration tool for Azeron keypads
-Exec=/opt/${pkgname}/azeron-software-v1 --no-sandbox %U
+Exec=/opt/${pkgname}/azeron-software-v1 --ozone-platform=x11 --no-sandbox %U
 Icon=azeron-software
 Terminal=false
 Type=Application
