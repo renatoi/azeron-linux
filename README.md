@@ -1,4 +1,4 @@
-# Azeron Software for Linux
+# Azeron Software for Linux and macOS
 
 Unofficial Linux repackage of the [Azeron](https://azeron.eu) keypad configuration software (v1.5.6). Provides full feature parity with the Windows version — button remapping, profile management, thumbstick calibration, LED control, and firmware updates.
 
@@ -34,6 +34,12 @@ sudo dnf install hidapi libusb1 python3 usbutils dfu-util
 
 ```bash
 sudo zypper install libhidapi-hidraw0 libusb-1_0-0 python3 usbutils dfu-util
+```
+
+**macOS (Apple Silicon, Tahoe/Sonoma/Sequoia):**
+
+```bash
+brew install node dfu-util libusb hidapi python@3
 ```
 
 `dfu-util` is only required for firmware updates.
@@ -83,6 +89,19 @@ makepkg -si
 
 This builds and installs the package in one step. It also installs udev rules automatically.
 
+### Option F: macOS (build locally, Apple Silicon)
+
+macOS builds are not published; build locally:
+
+```bash
+git clone https://github.com/renatoi/azeron-linux.git
+cd azeron-linux
+bash scripts/setup-macos.sh
+npm run build:mac
+```
+
+Unsigned `dmg` and `zip` artifacts land in `output/`. Gatekeeper will prompt on first launch; right-click -> Open to trust your local build.
+
 ## Udev Rules
 
 The Azeron device communicates via HID, which requires permission to access `/dev/hidraw*`. If you installed via `makepkg -si`, the udev rules are already in place. Otherwise, install them manually:
@@ -119,6 +138,16 @@ sudo apt install libhidapi-dev libusb-1.0-0-dev nodejs npm p7zip-full
 sudo dnf install hidapi-devel libusb1-devel nodejs npm p7zip
 ```
 
+**macOS (Apple Silicon):**
+
+```bash
+brew install node dfu-util libusb hidapi python@3
+git clone https://github.com/renatoi/azeron-linux.git
+cd azeron-linux
+bash scripts/setup-macos.sh
+npm run build:mac
+```
+
 Then clone and build:
 
 ```bash
@@ -151,12 +180,19 @@ node scripts/patch-main.js
 npm run build
 ```
 
+For macOS, use the dedicated setup script (applies mac-safe patches and skips udev):
+
+```bash
+bash scripts/setup-macos.sh
+npm run build:mac
+```
+
 ### Patches
 
-`node scripts/patch-main.js` applies 14 targeted string replacements to the minified `main-process.js`. The script fails with an error if any search string is not found, which signals that an upstream update changed something that needs attention.
+`node scripts/patch-main.js` applies targeted string replacements to the minified `main-process.js`. It defaults to `AZERON_PATCH_TARGET=linux`; set `AZERON_PATCH_TARGET=darwin` for macOS to skip Linux-only USB reset/kill-on-close changes. The script fails with an error if any search string is not found, which signals that an upstream update changed something that needs attention.
 
 | Patch | Description |
-|-------|-------------|
+| --- | --- |
 | fix-platform-string | Fix `e.Linux="Linux"` to lowercase `"linux"` |
 | fix-tray-icon | Resolve tray icon path using `process.resourcesPath` |
 | fix-app-root-path | Use `process.execPath` for reliable root path detection |
@@ -165,9 +201,9 @@ npm run build
 | fix-login-items-1/2/3 | Skip `setLoginItemSettings` on Linux (unsupported API) |
 | fix-hid-write-padding-text/binary | Pad HID writes to 65 bytes (Linux hidraw doesn't auto-pad like Windows) |
 | fix-profile-activation | Fire-and-forget profile switch (device does USB reconnect to apply) |
-| fix-usb-reset-on-connect | USB device reset before HID open (fixes config interface after reconnect) |
+| fix-usb-reset-on-connect | Linux only: USB device reset before HID open (fixes config interface after reconnect) |
 | silence-console-logs | Reduce console log level from debug to error |
-| fix-quit-on-window-close | Clean exit on window close (avoids node-hid NAPI crash on Linux) |
+| fix-quit-on-window-close | Linux only: Clean exit on window close (avoids node-hid NAPI crash on Linux) |
 
 ### Running in development mode
 
@@ -188,11 +224,12 @@ bash scripts/check-update.sh --apply
 ```
 
 With `--apply`, the script will:
+
 1. Download the new installer and verify its SHA-512 checksum
 2. Extract the Electron app from the NSIS installer
 3. Replace `app/dist`, `app/node_modules`, and firmware files
 4. Rebuild `node-hid` for Linux
-5. Apply all Linux patches (fails loudly if a patch no longer matches)
+5. Apply platform patches (default linux; set `AZERON_PATCH_TARGET=darwin` for mac builds)
 6. Update `build-manifest.json`, `package.json`, and `PKGBUILD` with the new version
 7. Build AppImage and pacman packages
 
@@ -207,14 +244,18 @@ If any step fails, it reports all errors at the end.
 ### Device not detected
 
 1. Check that the device shows up on USB:
+
    ```bash
    lsusb -d 16d0:
    ```
+
 2. Verify udev rules are installed and reloaded (see above).
 3. Check hidraw permissions:
+
    ```bash
    ls -l /dev/hidraw*
    ```
+
    Devices should have `crw-rw-rw-` permissions after udev rules are applied.
 
 ### "cannot open device with path /dev/hidrawN"
@@ -257,7 +298,7 @@ This project extracts the original app from the Windows installer, rebuilds the 
 
 ## Project Structure
 
-```
+```text
 azeron-linux/
   .github/workflows/
     release.yml           # CI: weekly update check + build + release

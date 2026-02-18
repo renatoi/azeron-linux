@@ -7,14 +7,26 @@ const fs = require("fs");
 const path = require("path");
 
 const MAIN_JS = path.join(__dirname, "..", "app", "dist", "main-process.js");
+const targetArg = (process.argv.find((a) => a.startsWith("--platform=")) || "").split("=")[1];
+const patchTarget =
+  (process.env.AZERON_PATCH_TARGET || process.env.AZERON_TARGET || targetArg || process.platform).toLowerCase();
+const isLinux = patchTarget.startsWith("linux");
+const isMac = patchTarget === "darwin" || patchTarget === "mac" || patchTarget === "osx";
 
 let code = fs.readFileSync(MAIN_JS, "utf8");
 const original = code;
 
 const patches = [];
 
-function patch(name, search, replace) {
+function patch(name, search, replace, { platforms } = {}) {
+  if (platforms && !platforms.includes(patchTarget) && !platforms.includes("all")) {
+    return;
+  }
   if (!code.includes(search)) {
+    if (code.includes(replace)) {
+      console.log(`PATCH SKIP: "${name}" already applied for target ${patchTarget}`);
+      return;
+    }
     console.error(`PATCH FAILED: "${name}" - search string not found`);
     console.error(`  Looking for: ${search.substring(0, 100)}...`);
     process.exit(1);
@@ -26,6 +38,8 @@ function patch(name, search, replace) {
   code = code.split(search).join(replace);
   patches.push(name);
 }
+
+console.log(`Applying patches for target: ${patchTarget}${isLinux ? " (linux)" : isMac ? " (macos)" : ""}`);
 
 // Patch 1: Fix platform detection string
 // Original: e.Linux="Linux" but process.platform returns "linux" (lowercase)
@@ -155,7 +169,8 @@ patch(
   patch(
     "fix-usb-reset-on-connect",
     'i=new Ol.HID(o.path),ys.info("HID Being opened!")',
-    usbReset + ',i=new Ol.HID(o.path),ys.info("HID Being opened!")'
+    usbReset + ',i=new Ol.HID(o.path),ys.info("HID Being opened!")',
+    { platforms: ["linux"] }
   );
 }
 
@@ -178,7 +193,8 @@ patch(
 patch(
   "fix-quit-on-window-close",
   'e.app.on("quit"',
-  'e.app.on("window-all-closed",(()=>{require("child_process").spawn("kill",["-9",String(process.pid)],{detached:true,stdio:"ignore"}).unref()})),e.app.on("quit"'
+  'e.app.on("window-all-closed",(()=>{require("child_process").spawn("kill",["-9",String(process.pid)],{detached:true,stdio:"ignore"}).unref()})),e.app.on("quit"',
+  { platforms: ["linux"] }
 );
 
 
