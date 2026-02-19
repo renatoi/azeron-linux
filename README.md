@@ -1,4 +1,4 @@
-# Azeron Software for Linux
+# Azeron Software for Linux and macOS
 
 Unofficial Linux repackage of the [Azeron](https://azeron.eu) keypad configuration software (v1.5.6). Provides full feature parity with the Windows version — button remapping, profile management, thumbstick calibration, LED control, and firmware updates.
 
@@ -34,6 +34,12 @@ sudo dnf install hidapi libusb1 python3 usbutils dfu-util
 
 ```bash
 sudo zypper install libhidapi-hidraw0 libusb-1_0-0 python3 usbutils dfu-util
+```
+
+**macOS (Apple Silicon):**
+
+```bash
+brew install node dfu-util libusb hidapi python@3
 ```
 
 `dfu-util` is only required for firmware updates.
@@ -83,6 +89,21 @@ makepkg -si
 
 This builds and installs the package in one step. It also installs udev rules automatically.
 
+### Option F: macOS (build locally, Apple Silicon)
+
+macOS builds are not published; build locally:
+
+```bash
+git clone https://github.com/renatoi/azeron-linux.git
+cd azeron-linux
+bash scripts/setup-macos.sh
+npm run build:mac
+```
+
+Unsigned `dmg` and `zip` artifacts land in `output/`. Gatekeeper will prompt on first launch; right-click -> Open to trust your local build.
+
+> **Note:** Only Apple Silicon (arm64) is supported. The `build:mac` script hardcodes `--arm64`. Intel Mac support could be added later.
+
 ## Udev Rules
 
 The Azeron device communicates via HID, which requires permission to access `/dev/hidraw*`. If you installed via `makepkg -si`, the udev rules are already in place. Otherwise, install them manually:
@@ -119,6 +140,12 @@ sudo apt install libhidapi-dev libusb-1.0-0-dev nodejs npm p7zip-full
 sudo dnf install hidapi-devel libusb1-devel nodejs npm p7zip
 ```
 
+**macOS (Apple Silicon):**
+
+```bash
+brew install node dfu-util libusb hidapi python@3
+```
+
 Then clone and build:
 
 ```bash
@@ -153,21 +180,22 @@ npm run build
 
 ### Patches
 
-`node scripts/patch-main.js` applies 14 targeted string replacements to the minified `main-process.js`. The script fails with an error if any search string is not found, which signals that an upstream update changed something that needs attention.
+`node scripts/patch-main.js` applies targeted string replacements to the minified `main-process.js`. The script fails with an error if any search string is not found, which signals that an upstream update changed something that needs attention. Patches can be platform-conditional — set `AZERON_PATCH_TARGET=darwin` for macOS builds.
 
-| Patch | Description |
-|-------|-------------|
-| fix-platform-string | Fix `e.Linux="Linux"` to lowercase `"linux"` |
-| fix-tray-icon | Resolve tray icon path using `process.resourcesPath` |
-| fix-app-root-path | Use `process.execPath` for reliable root path detection |
-| disable-auto-updater | Disable S3 auto-update (no Linux builds on their CDN) |
-| fix-dfu-util-name | Replace `dfu-util-static` with system `dfu-util` |
-| fix-login-items-1/2/3 | Skip `setLoginItemSettings` on Linux (unsupported API) |
-| fix-hid-write-padding-text/binary | Pad HID writes to 65 bytes (Linux hidraw doesn't auto-pad like Windows) |
-| fix-profile-activation | Fire-and-forget profile switch (device does USB reconnect to apply) |
-| fix-usb-reset-on-connect | USB device reset before HID open (fixes config interface after reconnect) |
-| silence-console-logs | Reduce console log level from debug to error |
-| fix-quit-on-window-close | Clean exit on window close (avoids node-hid NAPI crash on Linux) |
+| Patch | Platform | Description |
+|-------|----------|-------------|
+| fix-platform-string | all | Fix `e.Linux="Linux"` to lowercase `"linux"` |
+| fix-tray-icon | all | Resolve tray icon path using `process.resourcesPath` |
+| fix-app-root-path | all | Use `process.execPath` for reliable root path detection |
+| disable-auto-updater | all | Disable S3 auto-update (no Linux/macOS builds on their CDN) |
+| fix-dfu-util-name | all | Replace `dfu-util-static` with system `dfu-util` |
+| fix-login-items-1/2/3 | all | Skip `setLoginItemSettings` on Linux (unsupported API) |
+| fix-wayland-scaling | linux | Force x11/xwayland to fix fractional scaling on Wayland |
+| fix-hid-write-padding-text/binary | all | Pad HID writes to 65 bytes (Linux hidraw doesn't auto-pad like Windows) |
+| fix-profile-activation | linux | Fire-and-forget profile switch (device does USB reconnect to apply) |
+| fix-usb-reset-on-connect | linux | USB device reset before HID open (fixes config interface after reconnect) |
+| silence-console-logs | all | Reduce console log level from debug to error |
+| fix-quit-on-window-close | linux | Clean exit on window close (avoids node-hid NAPI crash on Linux) |
 
 ### Running in development mode
 
@@ -260,6 +288,7 @@ This project extracts the original app from the Windows installer, rebuilds the 
 ```
 azeron-linux/
   .github/workflows/
+    ci.yml                # CI: build validation on PRs (Linux + macOS)
     release.yml           # CI: weekly update check + build + release
   app/
     dist/                 # Webpack bundles (unpatched; patched during build)
@@ -271,8 +300,9 @@ azeron-linux/
     icon.png              # App icon
   firmware/               # Firmware binaries for all Azeron models
   scripts/
-    patch-main.js         # Linux compatibility patches
-    setup.sh              # Automated setup script
+    patch-main.js         # Platform compatibility patches (Linux + macOS)
+    setup.sh              # Automated setup script (Linux)
+    setup-macos.sh        # Automated setup script (macOS)
     check-update.sh       # Check for new Azeron releases + auto-update
   build-manifest.json     # Tracks upstream version and checksum
   package.json            # Build config (electron-builder)

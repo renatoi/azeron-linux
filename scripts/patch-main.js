@@ -7,14 +7,28 @@ const fs = require("fs");
 const path = require("path");
 
 const MAIN_JS = path.join(__dirname, "..", "app", "dist", "main-process.js");
+const targetArg = (process.argv.find((a) => a.startsWith("--platform=")) || "").split("=")[1];
+const patchTarget =
+  (process.env.AZERON_PATCH_TARGET || targetArg || process.platform).toLowerCase();
+const isLinux = patchTarget.startsWith("linux");
+const isMac = patchTarget === "darwin" || patchTarget === "mac" || patchTarget === "osx";
 
 let code = fs.readFileSync(MAIN_JS, "utf8");
 const original = code;
 
 const patches = [];
+const skipped = [];
 
-function patch(name, search, replace) {
+function patch(name, search, replace, { platforms } = {}) {
+  if (platforms && !platforms.includes(patchTarget) && !platforms.includes("all")) {
+    skipped.push(name);
+    return;
+  }
   if (!code.includes(search)) {
+    if (code.includes(replace)) {
+      console.log(`PATCH SKIP: "${name}" already applied`);
+      return;
+    }
     console.error(`PATCH FAILED: "${name}" - search string not found`);
     console.error(`  Looking for: ${search.substring(0, 100)}...`);
     process.exit(1);
@@ -26,6 +40,8 @@ function patch(name, search, replace) {
   code = code.split(search).join(replace);
   patches.push(name);
 }
+
+console.log(`Applying patches for target: ${patchTarget}${isLinux ? " (linux)" : isMac ? " (macos)" : ""}`);
 
 // Patch 1: Fix platform detection string
 // Original: e.Linux="Linux" but process.platform returns "linux" (lowercase)
@@ -95,6 +111,18 @@ patch(
   '"linux"!==process.platform&&e.app.setLoginItemSettings({openAtLogin:r,path:e.app.getPath("exe"),args:o?["--minimized"]:[]}),'
 );
 
+// Patch 8: Force x11/xwayland on Linux to fix fractional scaling on Wayland (issue #1)
+// On Wayland with fractional scaling, the Electron app renders at wrong scale.
+// Forcing x11 via ozone-platform switch makes it use xwayland instead, which handles
+// scaling correctly. The flag is harmless on X11 sessions (it's already x11).
+// Injected before e.app.requestSingleInstanceLock() so it takes effect early.
+patch(
+  "fix-wayland-scaling",
+  "let uu;e.app.requestSingleInstanceLock()",
+  'let uu;e.app.commandLine.appendSwitch("ozone-platform","x11");e.app.requestSingleInstanceLock()',
+  { platforms: ["linux"] }
+);
+
 // Patch 9: Pad HID write buffers to 65 bytes for Linux hidraw
 // On Windows, the HID driver automatically pads short writes to the report size.
 // On Linux hidraw, writes are sent as-is. The Azeron device ignores short reports.
@@ -122,7 +150,8 @@ patch(
 patch(
   "fix-profile-activation",
   'e.ipcMain.handle(sn,((e,t)=>{n.add((()=>{i.switchProfile(+t.profileId)}),{id:sn,sMatcher:[Is.PROFILE_INDEX],bMatcher:e=>gi(e).type===Yo.SWITCH_PROFILE})}))',
-  'e.ipcMain.handle(sn,((e,t)=>{i.switchProfile(+t.profileId)}))'
+  'e.ipcMain.handle(sn,((e,t)=>{i.switchProfile(+t.profileId)}))',
+  { platforms: ["linux"] }
 );
 
 // Patch 10b: USB reset before HID open
@@ -155,7 +184,8 @@ patch(
   patch(
     "fix-usb-reset-on-connect",
     'i=new Ol.HID(o.path),ys.info("HID Being opened!")',
-    usbReset + ',i=new Ol.HID(o.path),ys.info("HID Being opened!")'
+    usbReset + ',i=new Ol.HID(o.path),ys.info("HID Being opened!")',
+    { platforms: ["linux"] }
   );
 }
 
@@ -178,7 +208,8 @@ patch(
 patch(
   "fix-quit-on-window-close",
   'e.app.on("quit"',
-  'e.app.on("window-all-closed",(()=>{require("child_process").spawn("kill",["-9",String(process.pid)],{detached:true,stdio:"ignore"}).unref()})),e.app.on("quit"'
+  'e.app.on("window-all-closed",(()=>{require("child_process").spawn("kill",["-9",String(process.pid)],{detached:true,stdio:"ignore"}).unref()})),e.app.on("quit"',
+  { platforms: ["linux"] }
 );
 
 
@@ -192,3 +223,7 @@ if (code === original) {
 fs.writeFileSync(MAIN_JS, code);
 console.log(`Successfully applied ${patches.length} patches:`);
 patches.forEach((p) => console.log(`  - ${p}`));
+if (skipped.length) {
+  console.log(`Skipped ${skipped.length} patches (not for ${patchTarget}):`);
+  skipped.forEach((p) => console.log(`  - ${p}`));
+}

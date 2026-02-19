@@ -6,12 +6,14 @@
   "scripts": {
     "start": "electron app",
     "patch": "node scripts/patch-main.js",
+    "patch:mac": "AZERON_PATCH_TARGET=darwin node scripts/patch-main.js",
     "rebuild": "electron-rebuild -f -w node-hid -m app",
     "build": "npm run patch && electron-builder --linux",
     "build:appimage": "npm run patch && electron-builder --linux AppImage",
     "build:pacman": "npm run patch && electron-builder --linux pacman",
     "build:deb": "npm run patch && electron-builder --linux deb",
-    "build:rpm": "npm run patch && electron-builder --linux rpm"
+    "build:rpm": "npm run patch && electron-builder --linux rpm",
+    "build:mac": "npm run patch:mac && electron-builder --mac dmg zip --arm64"
   },
   "devDependencies": {
     "@electron/rebuild": "^3.7.1",
@@ -72,6 +74,39 @@
         {
           "from": "assets/99-azeron.rules",
           "to": "udev/99-azeron.rules"
+        },
+        {
+          "from": "app/update-notes.json",
+          "to": "update-notes.json"
+        }
+      ]
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["arm64"]
+        }
+      ],
+      "category": "public.app-category.utilities",
+      "icon": "build/icon.png",
+      "extraFiles": [
+        {
+          "from": "firmware",
+          "to": "firmware",
+          "filter": ["**/*.bin", "**/*.hex"]
+        },
+        {
+          "from": "app/src/resources/proving-ground-profiles",
+          "to": "src/resources/proving-ground-profiles"
+        },
+        {
+          "from": "app/src/resources/tray.png",
+          "to": "src/resources/tray.png"
         },
         {
           "from": "app/update-notes.json",
