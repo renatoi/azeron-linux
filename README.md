@@ -89,20 +89,15 @@ makepkg -si
 
 This builds and installs the package in one step. It also installs udev rules automatically.
 
-### Option F: macOS (build locally, Apple Silicon)
-
-macOS builds are not published; build locally:
+### Option F: Homebrew (macOS, Apple Silicon)
 
 ```bash
-git clone https://github.com/renatoi/azeron-linux.git
-cd azeron-linux
-bash scripts/setup-macos.sh
-npm run build:mac
+brew install --cask renatoi/azeron-linux/azeron-software
 ```
 
-Unsigned `dmg` and `zip` artifacts land in `output/`. Gatekeeper will prompt on first launch; right-click -> Open to trust your local build.
+Or download the latest `.zip` from the [releases page](https://github.com/renatoi/azeron-linux/releases), extract, and drag to Applications. Gatekeeper will prompt on first launch; right-click -> Open to trust the build.
 
-> **Note:** Only Apple Silicon (arm64) is supported. The `build:mac` script hardcodes `--arm64`. Intel Mac support could be added later.
+> **Note:** Only Apple Silicon (arm64) is supported.
 
 ## Udev Rules
 
@@ -289,7 +284,9 @@ This project extracts the original app from the Windows installer, rebuilds the 
 azeron-linux/
   .github/workflows/
     ci.yml                # CI: build validation on PRs (Linux + macOS)
-    release.yml           # CI: weekly update check + build + release
+    release.yml           # CI: weekly update check + build + release (Linux + macOS)
+  Casks/
+    azeron-software.rb    # Homebrew cask (macOS tap)
   app/
     dist/                 # Webpack bundles (unpatched; patched during build)
     src/resources/        # Tray icon, proving-ground profiles

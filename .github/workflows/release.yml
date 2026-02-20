@@ -14,8 +14,12 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  build-linux:
     runs-on: ubuntu-22.04
+    outputs:
+      build: ${{ steps.should_build.outputs.build }}
+      mode: ${{ steps.should_build.outputs.mode }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -87,6 +91,13 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Building release for v$VERSION"
 
+      - name: Restore unpatched source
+        if: steps.should_build.outputs.build == 'true' && steps.should_build.outputs.mode == 'update'
+        run: |
+          if [ -f app/dist/main-process.js.unpatched ]; then
+            mv app/dist/main-process.js.unpatched app/dist/main-process.js
+          fi
+
       - name: Commit updated files
         if: steps.should_build.outputs.build == 'true' && steps.should_build.outputs.mode == 'update'
         run: |
@@ -98,12 +109,75 @@ jobs:
             git push
           fi
 
-      - name: Create release
+      - name: Upload Linux artifacts
         if: steps.should_build.outputs.build == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: output/azeron-software-*
+
+  build-macos:
+    needs: build-linux
+    if: needs.build-linux.outputs.build == 'true'
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install system dependencies
+        run: brew install libusb hidapi
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Install and rebuild node-hid
+        run: |
+          cd app && npm install node-hid@2.2.0 && cd ..
+          npx @electron/rebuild -f -w node-hid -m app -v 30.0.9
+
+      - name: Apply macOS patches
+        run: npm run patch:mac
+
+      - name: Build macOS packages
+        run: npx electron-builder --mac zip --arm64
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: output/azeron-software-*
+
+  release:
+    needs: [build-linux, build-macos]
+    if: always() && needs.build-linux.outputs.build == 'true' && needs.build-linux.result == 'success'
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: output
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -lh output/
+
+      - name: Create release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
+          VERSION="${{ needs.build-linux.outputs.version }}"
           TAG="v${VERSION}"
 
           # Delete existing tag/release if force rebuilding same version
@@ -116,15 +190,19 @@ jobs:
           git tag -f "$TAG"
           git push origin "$TAG" --force
 
+          TITLE="Azeron Software v${VERSION}"
+          if [ "${{ needs.build-macos.result }}" = "success" ]; then
+            TITLE="${TITLE} for Linux & macOS"
+          else
+            TITLE="${TITLE} for Linux"
+          fi
+
           gh release create "$TAG" \
-            --title "Azeron Software v${VERSION} for Linux" \
+            --title "$TITLE" \
             --generate-notes \
-            output/azeron-software-*.AppImage \
-            output/azeron-software-*.deb \
-            output/azeron-software-*.rpm
+            output/azeron-software-*
 
       - name: Publish to AUR
-        if: steps.should_build.outputs.build == 'true'
         uses: KSXGitHub/github-actions-deploy-aur@v3
         with:
           pkgname: azeron-software
@@ -132,4 +210,26 @@ jobs:
           commit_username: github-actions[bot]
           commit_email: github-actions[bot]@users.noreply.github.com
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-          commit_message: "Update to v${{ steps.version.outputs.version }}"
+          commit_message: "Update to v${{ needs.build-linux.outputs.version }}"
+
+      - name: Update Homebrew cask
+        if: needs.build-macos.result == 'success'
+        run: |
+          VERSION="${{ needs.build-linux.outputs.version }}"
+          MAC_ZIP="output/azeron-software-${VERSION}-arm64-mac.zip"
+
+          if [ -f "$MAC_ZIP" ]; then
+            SHA256=$(sha256sum "$MAC_ZIP" | awk '{print $1}')
+            sed -i "s/version \".*\"/version \"${VERSION}\"/" Casks/azeron-software.rb
+            sed -i "s/sha256 \".*\"/sha256 \"${SHA256}\"/" Casks/azeron-software.rb
+
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add Casks/azeron-software.rb
+            if ! git diff --cached --quiet; then
+              git commit -m "Update Homebrew cask to v${VERSION}"
+              git push
+            fi
+          else
+            echo "::warning::macOS zip not found at $MAC_ZIP, skipping cask update"
+          fi

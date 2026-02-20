@@ -149,6 +149,9 @@ npx @electron/rebuild -f -w node-hid -m app -v "$ELECTRON_VERSION" 2>&1 || {
     error "Failed to rebuild node-hid for Electron $ELECTRON_VERSION"
 }
 
+# Save unpatched backup (CI restores this before committing so committed source stays platform-neutral)
+cp "$PROJECT_DIR/app/dist/main-process.js" "$PROJECT_DIR/app/dist/main-process.js.unpatched"
+
 # Apply patches
 echo ""
 echo "=== Applying patches (target: $PATCH_TARGET) ==="

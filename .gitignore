@@ -20,6 +20,9 @@ Thumbs.db
 # Claude Code
 .claude/
 
+# Unpatched backup (used by CI to keep committed source platform-neutral)
+*.unpatched
+
 # Editor
 *.swp
 *.swo

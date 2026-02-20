@@ -82,6 +82,7 @@
       ]
     },
     "mac": {
+      "artifactName": "azeron-software-${version}-${arch}-mac.${ext}",
       "target": [
         {
           "target": "dmg",
