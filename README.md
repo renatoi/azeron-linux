@@ -186,7 +186,7 @@ npm run build
 | fix-dfu-util-name | all | Replace `dfu-util-static` with system `dfu-util` |
 | fix-login-items-1/2/3 | all | Skip `setLoginItemSettings` on Linux (unsupported API) |
 | fix-wayland-scaling | linux | Force x11/xwayland to fix fractional scaling on Wayland |
-| fix-hid-write-padding-text/binary | all | Pad HID writes to 65 bytes (Linux hidraw doesn't auto-pad like Windows) |
+| fix-hid-write-padding-text/binary | linux | Pad HID writes to 65 bytes (Linux hidraw doesn't auto-pad like Windows/macOS) |
 | fix-profile-activation | linux | Fire-and-forget profile switch (device does USB reconnect to apply) |
 | fix-usb-reset-on-connect | linux | USB device reset before HID open (fixes config interface after reconnect) |
 | silence-console-logs | all | Reduce console log level from debug to error |
