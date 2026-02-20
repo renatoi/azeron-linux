@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: linux
+            patch_cmd: npm run patch
+            build_cmd: npx electron-builder --linux AppImage
+          - os: macos-14
+            target: darwin
+            patch_cmd: npm run patch:mac
+            build_cmd: npx electron-builder --mac zip --arm64
+    runs-on: ${{ matrix.os }}
+    name: Build (${{ matrix.target }})
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libhidapi-dev libusb-1.0-0-dev libudev-dev
+
+      - name: Install system dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install libusb hidapi
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Install and rebuild node-hid
+        run: |
+          cd app && npm install node-hid@2.2.0 && cd ..
+          npx @electron/rebuild -f -w node-hid -m app -v 30.0.9
+
+      - name: Apply patches
+        run: ${{ matrix.patch_cmd }}
+
+      - name: Build
+        run: ${{ matrix.build_cmd }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.target }}
+          path: output/*
+          retention-days: 7
