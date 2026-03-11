@@ -22,7 +22,7 @@
   },
   "build": {
     "appId": "com.azeron.software",
-    "productName": "Azeron Software",
+    "productName": "azeron-software",
     "artifactName": "azeron-software-${version}-${arch}.${ext}",
     "directories": {
       "app": "app",
