@@ -10,5 +10,5 @@ cask "azeron-software" do
   depends_on macos: ">= :sonoma"
   depends_on arch: :arm64
 
-  app "Azeron Software.app"
+  app "azeron-software.app"
 end
