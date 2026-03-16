@@ -131,13 +131,15 @@ patch(
 patch(
   "fix-hid-write-padding-text",
   "const i=[0,...n.slice(r,Math.min(r+64+1,o))];try{r+=e.write(Buffer.from(i))-1}",
-  "const i=[0,...n.slice(r,Math.min(r+64+1,o))];while(i.length<65)i.push(0);try{r+=e.write(Buffer.from(i))-1}"
+  "const i=[0,...n.slice(r,Math.min(r+64+1,o))];while(i.length<65)i.push(0);try{r+=e.write(Buffer.from(i))-1}",
+  { platforms: ["linux", "darwin"] }
 );
 // Binary protocol write:
 patch(
   "fix-hid-write-padding-binary",
   "const o=[0,...t.slice(n,Math.min(n+64+1,r))];try{n+=e.write(Buffer.from(o))-1}",
-  "const o=[0,...t.slice(n,Math.min(n+64+1,r))];while(o.length<65)o.push(0);try{n+=e.write(Buffer.from(o))-1}"
+  "const o=[0,...t.slice(n,Math.min(n+64+1,r))];while(o.length<65)o.push(0);try{n+=e.write(Buffer.from(o))-1}",
+  { platforms: ["linux", "darwin"] }
 );
 
 // Patch 10: Fix profile activation on Linux
