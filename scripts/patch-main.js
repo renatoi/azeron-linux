@@ -200,6 +200,18 @@ patch(
   'new Zi.transports.Console({level:process.env.AZERON_LOG_LEVEL||"error",handleExceptions:!0})'
 );
 
+// Patch 13: Gracefully handle HID open failure
+// When the device can't be opened (e.g. missing udev rules, permissions, or the USB
+// interface layout changed due to Xbox Joystick mode), new Ol.HID(path) throws.
+// Without a try-catch, the uncaughtException handler calls app.exit(), crashing the app.
+// Fix: catch the error, log it, clear the selected device, and restart device polling
+// so the app stays running and retries when the issue is resolved.
+patch(
+  "fix-hid-open-crash",
+  'i=new Ol.HID(o.path),ys.info("HID Being opened!")',
+  'try{i=new Ol.HID(o.path)}catch(_he){ys.error("Failed to open HID device: "+_he.message);o=void 0;d();return}ys.info("HID Being opened!")'
+);
+
 // Patch 12: Quit app when all windows are closed (Linux convention)
 // The app has no "window-all-closed" handler, so it keeps running after the window closes.
 // On Linux, node-hid's read thread does a blocking read() on hidraw. During shutdown,
