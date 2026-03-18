@@ -191,6 +191,82 @@ patch(
   );
 }
 
+// Patch 10c: Async HID writes to prevent UI freezing on Linux
+// On Linux, node-hid's synchronous write() goes through hidraw which can block
+// when the device firmware is busy (e.g., processing XInput data). This blocks
+// the Electron event loop and freezes the UI every time the app pings or retries.
+// Fix: After opening the HID device, monkey-patch i.write() to use a second fd
+// opened on the same hidraw path with fs.write() (libuv thread pool). The patched
+// write() returns buffer.length synchronously to satisfy the caller's offset
+// arithmetic. On close, the extra fd is cleaned up before calling the original close.
+// If setup fails (permissions, etc.), the original synchronous write is preserved.
+{
+  // Readable source for the async writer IIFE. Minified below via join('').
+  // This monkey-patches i.write() and i.close() right after the HID device opens.
+  //
+  //   (()=>{
+  //     try {
+  //       var _fs = require("fs"),
+  //           _fd = _fs.openSync(o.path, _fs.constants.O_WRONLY),
+  //           _closed = false,
+  //           _oc = i.close.bind(i);          // save original close
+  //
+  //       i.write = function(b) {
+  //         if (_closed) throw new Error("device closed");
+  //         _fs.write(_fd, b, function(e) {   // async via libuv thread pool
+  //           if (e && !_closed) ys.error("async hid write error: " + e.message);
+  //         });
+  //         return b.length;                  // satisfy caller's offset arithmetic
+  //       };
+  //
+  //       i.close = function() {
+  //         if (!_closed) {
+  //           _closed = true;
+  //           try { _fs.closeSync(_fd); }
+  //           catch(e) { ys.error("async hid close error: " + e.message); }
+  //         }
+  //         return _oc();                     // call original close
+  //       };
+  //     } catch(_ae) {
+  //       ys.error("async-hid-writer init failed: " + _ae.message);
+  //       // original sync i.write() is preserved as fallback
+  //     }
+  //   })()
+  //
+  const asyncWriter = '(()=>{'
+    + 'try{'
+    +   'var _fs=require("fs"),'
+    +       '_fd=_fs.openSync(o.path,_fs.constants.O_WRONLY),'
+    +       '_closed=!1,'
+    +       '_oc=i.close.bind(i);'
+    +   'i.write=function(b){'
+    +     'if(_closed)throw new Error("device closed");'
+    +     '_fs.write(_fd,b,function(e){'
+    +       'if(e&&!_closed)ys.error("async hid write error: "+e.message)'
+    +     '});'
+    +     'return b.length'
+    +   '};'
+    +   'i.close=function(){'
+    +     'if(!_closed){'
+    +       '_closed=!0;'
+    +       'try{_fs.closeSync(_fd)}'
+    +       'catch(e){ys.error("async hid close error: "+e.message)}'
+    +     '}'
+    +     'return _oc()'
+    +   '}'
+    + '}catch(_ae){'
+    +   'ys.error("async-hid-writer init failed: "+_ae.message)'
+    + '}'
+    + '})()';
+
+  patch(
+    "fix-async-hid-writes",
+    'i=new Ol.HID(o.path),ys.info("HID Being opened!")',
+    'i=new Ol.HID(o.path),' + asyncWriter + ',ys.info("HID Being opened!")',
+    { platforms: ["linux"] }
+  );
+}
+
 // Patch 11: Silence console log spam in production
 // The Console transport is set to "debug" which floods stdout with JSON logs.
 // Change to "error" so only actual errors appear in the terminal when run from CLI.
