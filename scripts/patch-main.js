@@ -191,7 +191,28 @@ patch(
   );
 }
 
-// Patch 10c: Async HID writes to prevent UI freezing on Linux
+// Patch 11: Silence console log spam in production
+// The Console transport is set to "debug" which floods stdout with JSON logs.
+// Change to "error" so only actual errors appear in the terminal when run from CLI.
+patch(
+  "silence-console-logs",
+  'new Zi.transports.Console({level:"debug",handleExceptions:!0})',
+  'new Zi.transports.Console({level:process.env.AZERON_LOG_LEVEL||"error",handleExceptions:!0})'
+);
+
+// Patch 12: Gracefully handle HID open failure
+// When the device can't be opened (e.g. missing udev rules, permissions, or the USB
+// interface layout changed due to Xbox Joystick mode), new Ol.HID(path) throws.
+// Without a try-catch, the uncaughtException handler calls app.exit(), crashing the app.
+// Fix: catch the error, log it, clear the selected device, and restart device polling
+// so the app stays running and retries when the issue is resolved.
+patch(
+  "fix-hid-open-crash",
+  'i=new Ol.HID(o.path),ys.info("HID Being opened!")',
+  'try{i=new Ol.HID(o.path)}catch(_he){ys.error("Failed to open HID device: "+_he.message);o=void 0;d();return}ys.info("HID Being opened!")'
+);
+
+// Patch 12b: Async HID writes to prevent UI freezing on Linux
 // On Linux, node-hid's synchronous write() goes through hidraw which can block
 // when the device firmware is busy (e.g., processing XInput data). This blocks
 // the Electron event loop and freezes the UI every time the app pings or retries.
@@ -201,8 +222,7 @@ patch(
 // arithmetic. On close, the extra fd is cleaned up before calling the original close.
 // If setup fails (permissions, etc.), the original synchronous write is preserved.
 {
-  // Readable source for the async writer IIFE. Minified below via join('').
-  // This monkey-patches i.write() and i.close() right after the HID device opens.
+  // Readable source for the async writer IIFE:
   //
   //   (()=>{
   //     try {
@@ -259,34 +279,15 @@ patch(
     + '}'
     + '})()';
 
+  // This patch runs AFTER patch 12 (crash fix), which wraps the HID open in
+  // try-catch. We search for the end of the catch block + the log statement.
   patch(
     "fix-async-hid-writes",
-    'i=new Ol.HID(o.path),ys.info("HID Being opened!")',
-    'i=new Ol.HID(o.path),' + asyncWriter + ',ys.info("HID Being opened!")',
+    'return}ys.info("HID Being opened!")',
+    'return}' + asyncWriter + ',ys.info("HID Being opened!")',
     { platforms: ["linux"] }
   );
 }
-
-// Patch 11: Silence console log spam in production
-// The Console transport is set to "debug" which floods stdout with JSON logs.
-// Change to "error" so only actual errors appear in the terminal when run from CLI.
-patch(
-  "silence-console-logs",
-  'new Zi.transports.Console({level:"debug",handleExceptions:!0})',
-  'new Zi.transports.Console({level:process.env.AZERON_LOG_LEVEL||"error",handleExceptions:!0})'
-);
-
-// Patch 12: Gracefully handle HID open failure
-// When the device can't be opened (e.g. missing udev rules, permissions, or the USB
-// interface layout changed due to Xbox Joystick mode), new Ol.HID(path) throws.
-// Without a try-catch, the uncaughtException handler calls app.exit(), crashing the app.
-// Fix: catch the error, log it, clear the selected device, and restart device polling
-// so the app stays running and retries when the issue is resolved.
-patch(
-  "fix-hid-open-crash",
-  'i=new Ol.HID(o.path),ys.info("HID Being opened!")',
-  'try{i=new Ol.HID(o.path)}catch(_he){ys.error("Failed to open HID device: "+_he.message);o=void 0;d();return}ys.info("HID Being opened!")'
-);
 
 // Patch 13: Quit app when all windows are closed (Linux convention)
 // The app has no "window-all-closed" handler, so it keeps running after the window closes.
