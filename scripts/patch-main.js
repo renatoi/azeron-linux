@@ -214,6 +214,47 @@ patch(
   { platforms: ["linux"] }
 );
 
+// Patch 13: Fix linked game file picker for Linux
+// The "Select associated app" dialog only shows .exe and .url files.
+// On Linux, executables have no extension, so show all files instead.
+patch(
+  "fix-linked-game-file-filter",
+  'filters:[{name:"Executable Files",extensions:["exe","url"]}]',
+  'filters:[{name:"All Files",extensions:["*"]}]',
+  { platforms: ["linux"] }
+);
+
+// Patch 14: Fix tasklist in system report for Linux
+// The diagnostics report calls execSync("tasklist") which is Windows-only.
+// Replace with "ps aux" which provides equivalent process listing on Linux.
+patch(
+  "fix-linked-game-report-tasklist",
+  '(0,Xa.execSync)("tasklist").toString()',
+  '(0,Xa.execSync)("ps aux").toString()',
+  { platforms: ["linux"] }
+);
+
+// Patch 15: Fix tasklist in get-process-list IPC handler for Linux
+// The IPC handler that populates the UI with running processes calls "tasklist".
+// Replace with "ps -e -o comm=" (headerless process names) and remove the
+// n.slice(5) that skipped Windows tasklist header lines.
+patch(
+  "fix-linked-game-list-tasklist",
+  '(0,Xa.exec)("tasklist",((e,n)=>{if(e)return void ys.info(`Failed to get active process list: ${e}`);const r=(e=>{const t=e.split("\\n"),n=[];for(const e of t){const t=e.trim().split(/\\s+/);if(t.length>0){const e=t[0].toLowerCase();n.includes(e)||n.push(e)}}return n.slice(5)})(n);t.webContents.send(rt,r)})',
+  '(0,Xa.exec)("ps -e -o comm=",((e,n)=>{if(e)return void ys.info(`Failed to get active process list: ${e}`);const r=(e=>{const t=e.split("\\n"),n=[];for(const e of t){const t=e.trim().split(/\\s+/);if(t.length>0){const e=t[0].toLowerCase();n.includes(e)||n.push(e)}}return n.slice(0)})(n);t.webContents.send(rt,r)})',
+  { platforms: ["linux"] }
+);
+
+// Patch 16: Fix tasklist in linked game monitoring loop for Linux
+// The 3-second monitoring loop calls "tasklist" to detect running linked games.
+// Replace with "ps -e -o comm=". The existing r.includes(n) string search
+// still works since process names appear in the ps output.
+patch(
+  "fix-linked-game-monitor-tasklist",
+  '(0,Xa.exec)("tasklist",((e,n)=>{if(e)return void ys.info(`Monitoring error: ${e}`)',
+  '(0,Xa.exec)("ps -e -o comm=",((e,n)=>{if(e)return void ys.info(`Monitoring error: ${e}`)',
+  { platforms: ["linux"] }
+);
 
 
 if (code === original) {
