@@ -236,23 +236,26 @@ patch(
 
 // Patch 15: Fix tasklist in get-process-list IPC handler for Linux
 // The IPC handler that populates the UI with running processes calls "tasklist".
-// Replace with "ps -e -o comm=" (headerless process names) and remove the
-// n.slice(5) that skipped Windows tasklist header lines.
+// Replace with "readlink /proc/[0-9]*/exe" which resolves each process's
+// executable symlink — no truncation, no argument confusion, handles spaces.
+// n.slice(5) removed (no header to skip). Only shows processes the user
+// has permission to read (own + root), which is the relevant set for game linking.
 patch(
   "fix-linked-game-list-tasklist",
   '(0,Xa.exec)("tasklist",((e,n)=>{if(e)return void ys.info(`Failed to get active process list: ${e}`);const r=(e=>{const t=e.split("\\n"),n=[];for(const e of t){const t=e.trim().split(/\\s+/);if(t.length>0){const e=t[0].toLowerCase();n.includes(e)||n.push(e)}}return n.slice(5)})(n);t.webContents.send(rt,r)})',
-  '(0,Xa.exec)("ps -e -o comm=",((e,n)=>{if(e)return void ys.info(`Failed to get active process list: ${e}`);const r=(e=>{const t=e.split("\\n"),n=[];for(const e of t){const t=e.trim();if(t){const e=t.toLowerCase();n.includes(e)||n.push(e)}}return n})(n);t.webContents.send(rt,r)})',
+  '(0,Xa.exec)("readlink /proc/[0-9]*/exe 2>/dev/null || true",((e,n)=>{if(e)return void ys.info(`Failed to get active process list: ${e}`);const r=(e=>{const t=e.split("\\n"),n=[];for(const e of t){const t=e.trim();if(t){const e=require("path").basename(t).toLowerCase();e&&!n.includes(e)&&n.push(e)}}return n})(n);t.webContents.send(rt,r)})',
   { platforms: ["linux"] }
 );
 
 // Patch 16: Fix tasklist in linked game monitoring loop for Linux
 // The 3-second monitoring loop calls "tasklist" to detect running linked games.
-// Replace with "ps -e -o comm=". The existing r.includes(n) string search
-// still works since process names appear in the ps output.
+// Replace with "ps -eo args=". The existing r.includes(n) string search
+// still works since process names appear in the full args output.
+// Using args instead of comm to avoid the 15-char kernel truncation limit.
 patch(
   "fix-linked-game-monitor-tasklist",
   '(0,Xa.exec)("tasklist",((e,n)=>{if(e)return void ys.info(`Monitoring error: ${e}`)',
-  '(0,Xa.exec)("ps -e -o comm=",((e,n)=>{if(e)return void ys.info(`Monitoring error: ${e}`)',
+  '(0,Xa.exec)("ps -eo args=",((e,n)=>{if(e)return void ys.info(`Monitoring error: ${e}`)',
   { platforms: ["linux"] }
 );
 
