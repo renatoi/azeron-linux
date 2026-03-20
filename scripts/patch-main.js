@@ -107,7 +107,7 @@ patch(
 );
 patch(
   "fix-login-items-3",
-  'e.app.setLoginItemSettings({openAtLogin:r,path:e.app.getPath("exe"),args:o?["--minimized"]:[]}),' ,
+  'e.app.setLoginItemSettings({openAtLogin:r,path:e.app.getPath("exe"),args:o?["--minimized"]:[]}),',
   '"linux"!==process.platform&&e.app.setLoginItemSettings({openAtLogin:r,path:e.app.getPath("exe"),args:o?["--minimized"]:[]}),'
 );
 
@@ -251,7 +251,10 @@ patch(
 // The 3-second monitoring loop calls "tasklist" to detect running linked games.
 // Replace with "ps -eo args=". The existing r.includes(n) string search
 // still works since process names appear in the full args output.
-// Using args instead of comm to avoid the 15-char kernel truncation limit.
+// Game monitoring uses ps -eo args= (full command line) for robust detection
+// of wrapped games (Proton, Wine, launchers) where the game name appears in
+// the arguments. This intentionally differs from the file picker (Patch 15)
+// which uses readlink for clean, human-readable executable names.
 patch(
   "fix-linked-game-monitor-tasklist",
   '(0,Xa.exec)("tasklist",((e,n)=>{if(e)return void ys.info(`Monitoring error: ${e}`)',
