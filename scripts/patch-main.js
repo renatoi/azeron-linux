@@ -241,7 +241,7 @@ patch(
 patch(
   "fix-linked-game-list-tasklist",
   '(0,Xa.exec)("tasklist",((e,n)=>{if(e)return void ys.info(`Failed to get active process list: ${e}`);const r=(e=>{const t=e.split("\\n"),n=[];for(const e of t){const t=e.trim().split(/\\s+/);if(t.length>0){const e=t[0].toLowerCase();n.includes(e)||n.push(e)}}return n.slice(5)})(n);t.webContents.send(rt,r)})',
-  '(0,Xa.exec)("ps -e -o comm=",((e,n)=>{if(e)return void ys.info(`Failed to get active process list: ${e}`);const r=(e=>{const t=e.split("\\n"),n=[];for(const e of t){const t=e.trim().split(/\\s+/);if(t.length>0){const e=t[0].toLowerCase();n.includes(e)||n.push(e)}}return n.slice(0)})(n);t.webContents.send(rt,r)})',
+  '(0,Xa.exec)("ps -e -o comm=",((e,n)=>{if(e)return void ys.info(`Failed to get active process list: ${e}`);const r=(e=>{const t=e.split("\\n"),n=[];for(const e of t){const t=e.trim();if(t){const e=t.toLowerCase();n.includes(e)||n.push(e)}}return n})(n);t.webContents.send(rt,r)})',
   { platforms: ["linux"] }
 );
 
