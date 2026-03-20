@@ -191,6 +191,83 @@ patch(
   );
 }
 
+// Patch 10c: Drain XInput endpoint to prevent device firmware lockup
+// When an Azeron device is in Xbox Joystick (XInput) mode, the firmware generates
+// gamepad reports on USB Interface 0. On Linux, no driver claims Interface 0
+// (xpad doesn't recognize the VID:PID, usbhid won't touch class 255), so nothing
+// polls the IN endpoint. The STM32's TX FIFO fills up and the firmware blocks,
+// freezing the entire device — even hardware buttons stop working.
+// Fix: After HID open, use the bundled node-usb (libusb) to claim Interface 0 and
+// start an async poll loop that drains XInput reports. This prevents the TX FIFO
+// from filling up. Cleanup is chained through i.close() to release on disconnect.
+//
+// Readable source for the XInput drain IIFE:
+//
+//   (()=>{
+//     try {
+//       var _usb = require("usb"),
+//           _ud = _usb.getDeviceList().find(d => d.deviceDescriptor.idVendor === 5840);
+//       if (!_ud) return;
+//       _ud.open();
+//       var _if = _ud.interface(0);
+//       // If a kernel driver (e.g. xpad) is already bound, it's draining the
+//       // endpoint — no action needed. Only drain when Driver=[none].
+//       try { if (_if.isKernelDriverActive()) { _ud.close(); return; } } catch(e) {}
+//       _if.claim();
+//       var _ep = _if.endpoints.find(e => e.direction === "in");
+//       if (!_ep) { try { _if.release(); } catch(e) {} try { _ud.close(); } catch(e) {} return; }
+//       _ep.startPoll(2, 64);
+//       _ep.on("data", function(){});
+//       _ep.on("error", function(){});
+//       var _dc = i.close.bind(i);
+//       i.close = function() {
+//         try { _ep.stopPoll(); } catch(e) {}
+//         try { _if.release(); } catch(e) {}
+//         try { _ud.close(); } catch(e) {}
+//         return _dc();
+//       };
+//       ys.info("XInput drain active on Interface 0");
+//     } catch(e) {
+//       ys.info("XInput drain skipped: " + e.message);
+//     }
+//   })()
+//
+{
+  const xinputDrain = '(()=>{'
+    + 'try{'
+    +   'var _usb=require("usb"),'
+    +       '_ud=_usb.getDeviceList().find(function(d){return d.deviceDescriptor.idVendor===5840});'
+    +   'if(!_ud)return;'
+    +   '_ud.open();'
+    +   'var _if=_ud.interface(0);'
+    +   'try{if(_if.isKernelDriverActive()){_ud.close();return}}catch(e){}'
+    +   '_if.claim();'
+    +   'var _ep=_if.endpoints.find(function(e){return e.direction==="in"});'
+    +   'if(!_ep){try{_if.release()}catch(e){}try{_ud.close()}catch(e){}return}'
+    +   '_ep.startPoll(2,64);'
+    +   '_ep.on("data",function(){});'
+    +   '_ep.on("error",function(){});'
+    +   'var _dc=i.close.bind(i);'
+    +   'i.close=function(){'
+    +     'try{_ep.stopPoll()}catch(e){}'
+    +     'try{_if.release()}catch(e){}'
+    +     'try{_ud.close()}catch(e){}'
+    +     'return _dc()'
+    +   '};'
+    +   'ys.info("XInput drain active on Interface 0")'
+    + '}catch(e){'
+    +   'ys.info("XInput drain skipped: "+e.message)'
+    + '}'
+    + '})()';
+
+  patch(
+    "fix-xinput-drain",
+    'ys.info("HID Being opened!")',
+    'ys.info("HID Being opened!"),' + xinputDrain,
+    { platforms: ["linux"] }
+  );
+}
+
 // Patch 11: Silence console log spam in production
 // The Console transport is set to "debug" which floods stdout with JSON logs.
 // Change to "error" so only actual errors appear in the terminal when run from CLI.
