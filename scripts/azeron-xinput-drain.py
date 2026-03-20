@@ -43,7 +43,10 @@ if not dev:
 if dev.is_kernel_driver_active(XINPUT_INTERFACE):
     sys.exit("Interface 0 already has a kernel driver — no drain needed")
 
-usb.util.claim_interface(dev, XINPUT_INTERFACE)
+try:
+    usb.util.claim_interface(dev, XINPUT_INTERFACE)
+except usb.core.USBError as e:
+    sys.exit(f"Failed to claim interface {XINPUT_INTERFACE}: {e}")
 print("Draining Interface 0 — device should not lock up in XInput mode. Ctrl+C to stop.")
 
 try:

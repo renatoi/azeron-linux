@@ -215,7 +215,7 @@ patch(
 //       try { if (_if.isKernelDriverActive()) { _ud.close(); return; } } catch(e) {}
 //       _if.claim();
 //       var _ep = _if.endpoints.find(e => e.direction === "in");
-//       if (!_ep) { _if.release(); _ud.close(); return; }
+//       if (!_ep) { try { _if.release(); } catch(e) {} try { _ud.close(); } catch(e) {} return; }
 //       _ep.startPoll(2, 64);
 //       _ep.on("data", function(){});
 //       _ep.on("error", function(){});
