@@ -189,6 +189,7 @@ npm run build
 | fix-hid-write-padding-text/binary | linux | Pad HID writes to 65 bytes (Linux hidraw doesn't auto-pad like Windows/macOS) |
 | fix-profile-activation | linux | Fire-and-forget profile switch (device does USB reconnect to apply) |
 | fix-usb-reset-on-connect | linux | USB device reset before HID open (fixes config interface after reconnect) |
+| fix-xinput-drain | linux | Drain XInput endpoint on Interface 0 to prevent firmware lockup |
 | silence-console-logs | all | Reduce console log level from debug to error |
 | fix-quit-on-window-close | linux | Clean exit on window close (avoids node-hid NAPI crash on Linux) |
 
@@ -268,6 +269,23 @@ AZERON_LOG_LEVEL=debug azeron-software
 
 Valid levels: `error` (default), `warn`, `info`, `debug`.
 
+### Device freezes in Xbox Joystick (XInput) mode
+
+Some Azeron devices (Cyborg II, Cyro, Cyro Lefty) can lock up when using an Xbox Joystick / XInput profile on Linux. The entire device becomes unresponsive — including hardware buttons — and can only be recovered by plugging into Windows/Android or switching to a non-XInput profile.
+
+**Cause:** The firmware generates XInput gamepad reports on USB Interface 0. On Windows, the Xbox controller driver consumes these reports. On Linux, no driver claims Interface 0, so the STM32 MCU's USB TX buffer fills up and the firmware blocks.
+
+**App fix (automatic):** The app automatically drains Interface 0 while running (v1.5.7+). No action needed — just keep the app open while using XInput mode.
+
+**Standalone fix (without the app):** If the device locks up when the app is not running, you can run the drain script manually:
+
+```bash
+pip install pyusb
+sudo python3 scripts/azeron-xinput-drain.py
+```
+
+This claims Interface 0 and reads from it continuously, preventing the TX buffer from filling up. Stop with Ctrl+C.
+
 ### Firmware updates
 
 Firmware updates require `dfu-util` installed on the system (`pacman -S dfu-util`, `apt install dfu-util`, or `dnf install dfu-util`). The device enters DFU mode (STM32 bootloader at `0483:df11`) during the update. The udev rules already grant access to this bootloader device.
@@ -297,6 +315,7 @@ azeron-linux/
     icon.png              # App icon
   firmware/               # Firmware binaries for all Azeron models
   scripts/
+    azeron-xinput-drain.py # Standalone XInput endpoint drain (for use without the app)
     patch-main.js         # Platform compatibility patches (Linux + macOS)
     setup.sh              # Automated setup script (Linux)
     setup-macos.sh        # Automated setup script (macOS)
