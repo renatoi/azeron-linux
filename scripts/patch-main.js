@@ -156,6 +156,18 @@ patch(
   { platforms: ["linux"] }
 );
 
+// Patch 12: Gracefully handle HID open failure (must run before 10b/10c which modify the same code)
+// When the device can't be opened (e.g. missing udev rules, permissions, or the USB
+// interface layout changed due to Xbox Joystick mode), new Ol.HID(path) throws.
+// Without a try-catch, the uncaughtException handler calls app.exit(), crashing the app.
+// Fix: catch the error, log it, clear the selected device, and restart device polling
+// so the app stays running and retries when the issue is resolved.
+patch(
+  "fix-hid-open-crash",
+  'i=new Ol.HID(o.path),ys.info("HID Being opened!")',
+  'try{i=new Ol.HID(o.path)}catch(_he){ys.error("Failed to open HID device: "+_he.message);o=void 0;d();return}ys.info("HID Being opened!")'
+);
+
 // Patch 10b: USB reset before HID open
 // On Linux, after a profile switch the device does a USB disconnect/reconnect.
 // After reconnect, the vendor-specific config interface (if04) is unresponsive until
@@ -164,6 +176,9 @@ patch(
 //
 // The USB reset uses python3+fcntl since Node.js has no built-in ioctl support.
 // The spawnSync call passes the Python code directly (no shell escaping needed).
+//
+// NOTE: Patch 12 (fix-hid-open-crash) runs first and wraps the HID open in try-catch,
+// so the search string here matches the post-patch-12 form.
 {
   // Build the Python code as a JS string. When inserted into main-process.js:
   // - \n becomes newline (Python needs real newlines for indentation)
@@ -185,8 +200,8 @@ patch(
 
   patch(
     "fix-usb-reset-on-connect",
-    'i=new Ol.HID(o.path),ys.info("HID Being opened!")',
-    usbReset + ',i=new Ol.HID(o.path),ys.info("HID Being opened!")',
+    'try{i=new Ol.HID(o.path)}catch(_he){ys.error("Failed to open HID device: "+_he.message);o=void 0;d();return}ys.info("HID Being opened!")',
+    usbReset + ';try{i=new Ol.HID(o.path)}catch(_he){ys.error("Failed to open HID device: "+_he.message);o=void 0;d();return}ys.info("HID Being opened!")',
     { platforms: ["linux"] }
   );
 }
@@ -277,18 +292,6 @@ patch(
   'new Zi.transports.Console({level:process.env.AZERON_LOG_LEVEL||"error",handleExceptions:!0})'
 );
 
-// Patch 12: Gracefully handle HID open failure
-// When the device can't be opened (e.g. missing udev rules, permissions, or the USB
-// interface layout changed due to Xbox Joystick mode), new Ol.HID(path) throws.
-// Without a try-catch, the uncaughtException handler calls app.exit(), crashing the app.
-// Fix: catch the error, log it, clear the selected device, and restart device polling
-// so the app stays running and retries when the issue is resolved.
-patch(
-  "fix-hid-open-crash",
-  'i=new Ol.HID(o.path),ys.info("HID Being opened!")',
-  'try{i=new Ol.HID(o.path)}catch(_he){ys.error("Failed to open HID device: "+_he.message);o=void 0;d();return}ys.info("HID Being opened!")'
-);
-
 // Patch 12b: Async HID writes to prevent UI freezing on Linux
 // On Linux, node-hid's synchronous write() goes through hidraw which can block
 // when the device firmware is busy (e.g., processing XInput data). This blocks
@@ -356,12 +359,14 @@ patch(
     + '}'
     + '})()';
 
-  // This patch runs AFTER patch 12 (crash fix), which wraps the HID open in
-  // try-catch. We search for the end of the catch block + the log statement.
+  // NOTE: Patch 12 (fix-hid-open-crash) runs first and wraps the HID open in try-catch.
+  // Patch 10b (fix-usb-reset-on-connect) prepends the USB reset before the try.
+  // The search string here matches the post-patch-12 form. The async writer is
+  // inserted between the try-catch and ys.info, which is only reached on success.
   patch(
     "fix-async-hid-writes",
-    'return}ys.info("HID Being opened!")',
-    'return}' + asyncWriter + ',ys.info("HID Being opened!")',
+    'catch(_he){ys.error("Failed to open HID device: "+_he.message);o=void 0;d();return}ys.info("HID Being opened!")',
+    'catch(_he){ys.error("Failed to open HID device: "+_he.message);o=void 0;d();return}' + asyncWriter + ';ys.info("HID Being opened!")',
     { platforms: ["linux"] }
   );
 }
