@@ -186,12 +186,18 @@ npm run build
 | fix-dfu-util-name | all | Replace `dfu-util-static` with system `dfu-util` |
 | fix-login-items-1/2/3 | all | Skip `setLoginItemSettings` on Linux (unsupported API) |
 | fix-wayland-scaling | linux | Force x11/xwayland to fix fractional scaling on Wayland |
-| fix-hid-write-padding-text/binary | linux | Pad HID writes to 65 bytes (Linux hidraw doesn't auto-pad like Windows/macOS) |
+| fix-hid-write-padding-text/binary | linux, macOS | Pad HID writes to 65 bytes (hidraw/IOKit don't auto-pad like Windows) |
 | fix-profile-activation | linux | Fire-and-forget profile switch (device does USB reconnect to apply) |
+| fix-hid-open-crash | all | Catch HID open failures to prevent app crash (retry automatically) |
 | fix-usb-reset-on-connect | linux | USB device reset before HID open (fixes config interface after reconnect) |
 | fix-xinput-drain | linux | Drain XInput endpoint on Interface 0 to prevent firmware lockup |
 | silence-console-logs | all | Reduce console log level from debug to error |
+| fix-async-hid-writes | linux | Async HID writes via libuv thread pool (prevents UI freeze) |
 | fix-quit-on-window-close | linux | Clean exit on window close (avoids node-hid NAPI crash on Linux) |
+| fix-linked-game-file-filter | linux | Show all files in linked game picker (not just .exe/.url) |
+| fix-linked-game-report-tasklist | linux | Replace `tasklist` with `ps aux` in system report |
+| fix-linked-game-list-tasklist | linux | Replace `tasklist` with `readlink /proc/*/exe` for process list |
+| fix-linked-game-monitor-tasklist | linux | Replace `tasklist` with `ps -eo args=` for game monitoring |
 
 ### Running in development mode
 
@@ -275,7 +281,7 @@ Some Azeron devices (Cyborg II, Cyro, Cyro Lefty) can lock up when using an Xbox
 
 **Cause:** The firmware generates XInput gamepad reports on USB Interface 0. On Windows, the Xbox controller driver consumes these reports. On Linux, no driver claims Interface 0, so the STM32 MCU's USB TX buffer fills up and the firmware blocks.
 
-**App fix (automatic):** The app automatically drains Interface 0 while running (v1.5.7+). No action needed — just keep the app open while using XInput mode.
+**App fix (automatic):** The app automatically drains Interface 0 while running. No action needed — just keep the app open while using XInput mode.
 
 **Standalone fix (without the app):** If the device locks up when the app is not running, you can run the drain script manually:
 
@@ -285,6 +291,22 @@ sudo python3 scripts/azeron-xinput-drain.py
 ```
 
 This claims Interface 0 and reads from it continuously, preventing the TX buffer from filling up. Stop with Ctrl+C.
+
+### XInput not detected by games / Steam Input
+
+The app's built-in XInput drain prevents device lockup but does not create a gamepad device that games can see. To get full XInput gamepad support, load the `xpad` kernel driver:
+
+```bash
+sudo modprobe xpad
+```
+
+The udev rules automatically register the Azeron's VID:PID with xpad on plug-in. Once xpad binds to Interface 0, it both drains the endpoint (preventing lockup) and creates `/dev/input/js*` devices that games and Steam Input can detect. The app's drain auto-skips when xpad is active.
+
+To make xpad load on every boot:
+
+```bash
+echo "xpad" | sudo tee /etc/modules-load.d/xpad.conf
+```
 
 ### Firmware updates
 
