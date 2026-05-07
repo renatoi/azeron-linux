@@ -104,7 +104,7 @@ Or download the latest `.zip` from the [releases page](https://github.com/renato
 The app communicates with the Azeron over HID, which requires the **Input Monitoring** privacy grant on macOS. Builds from this fork are signed with a hardened runtime and the proper entitlements, so the system should prompt automatically on first device interaction. If the prompt does not appear, add the app manually:
 
 1. Open **System Settings → Privacy & Security → Input Monitoring**
-2. Click the **`+`** button, navigate to `/Applications/Azeron Software.app`, add it
+2. Click the **`+`** button, navigate to `/Applications/azeron-software.app`, add it
 3. Toggle the switch on, then quit and relaunch the app
 
 #### Known issue: macOS 26 (Tahoe) and later

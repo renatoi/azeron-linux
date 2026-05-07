@@ -8,7 +8,7 @@
 //
 // This is NOT a substitute for a real Developer ID + notarization. It
 // produces an adhoc build that the user still has to:
-//   - dequarantine: xattr -d com.apple.quarantine /Applications/Azeron\ Software.app
+//   - dequarantine: xattr -d com.apple.quarantine /Applications/azeron-software.app
 //   - or right-click -> Open the first time
 // But once trusted, the entitlements + hardened runtime + sealed resources
 // give TCC a stable identity to bind the Input Monitoring grant to.
@@ -40,8 +40,7 @@ exports.default = async function macosAdhocSign(context) {
     { stdio: "inherit" }
   );
 
-  // Verify
-  const out = execFileSync("codesign", ["-dv", "--verbose=2", appPath], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  // Verify (codesign -dv writes to stderr; let it stream to the terminal)
   console.log("[macos-adhoc-sign] verification:");
-  console.log(out);
+  execFileSync("codesign", ["-dv", "--verbose=2", appPath], { stdio: "inherit" });
 };
