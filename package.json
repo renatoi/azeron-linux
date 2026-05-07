@@ -29,6 +29,7 @@
       "output": "output",
       "buildResources": "build"
     },
+    "afterSign": "scripts/macos-adhoc-sign.js",
     "linux": {
       "target": [
         {
