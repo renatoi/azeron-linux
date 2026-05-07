@@ -99,6 +99,18 @@ Or download the latest `.zip` from the [releases page](https://github.com/renato
 
 > **Note:** Only Apple Silicon (arm64) is supported.
 
+#### Granting permissions on macOS
+
+The app communicates with the Azeron over HID, which requires the **Input Monitoring** privacy grant on macOS. Builds from this fork are signed with a hardened runtime and the proper entitlements, so the system should prompt automatically on first device interaction. If the prompt does not appear, add the app manually:
+
+1. Open **System Settings → Privacy & Security → Input Monitoring**
+2. Click the **`+`** button, navigate to `/Applications/Azeron Software.app`, add it
+3. Toggle the switch on, then quit and relaunch the app
+
+#### Known issue: macOS 26 (Tahoe) and later
+
+On macOS 26.4.1+ the app may successfully open the configurator HID interface and write commands to the device, but never receive responses, leaving it stuck on **"select your device"**. The kernel processes input reports (visible as `InputReportCount` climbing in `ioreg -c IOHIDDevice -l`), but `hidapi`'s input-report callback does not deliver them to user space — affects both `node-hid@2.x` (NAN) and `node-hid@3.x` (N-API). See [issue #21](https://github.com/renatoi/azeron-linux/issues/21) for the diagnosis. A fix requires an `hidapi-mac` upstream change. As an interim workaround, run the Windows software through CrossOver / Parallels to configure the device — profiles persist on the keypad's onboard memory.
+
 ## Udev Rules
 
 The Azeron device communicates via HID, which requires permission to access `/dev/hidraw*`. If you installed via `makepkg -si`, the udev rules are already in place. Otherwise, install them manually:

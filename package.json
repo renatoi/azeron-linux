@@ -95,6 +95,11 @@
       ],
       "category": "public.app-category.utilities",
       "icon": "build/icon.png",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "identity": null,
       "extraFiles": [
         {
           "from": "firmware",
