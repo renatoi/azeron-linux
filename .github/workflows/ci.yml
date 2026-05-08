@@ -15,7 +15,7 @@ jobs:
           - os: ubuntu-22.04
             target: linux
             patch_cmd: npm run patch
-            build_cmd: npx electron-builder --linux AppImage
+            build_cmd: npx electron-builder --linux AppImage deb rpm
           - os: macos-14
             target: darwin
             patch_cmd: npm run patch:mac

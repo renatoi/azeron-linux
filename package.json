@@ -117,10 +117,14 @@
     },
     "deb": {
       "depends": ["libhidapi-hidraw0", "libusb-1.0-0"],
-      "recommends": ["dfu-util"]
+      "recommends": ["dfu-util"],
+      "afterInstall": "scripts/deb/after-install.sh",
+      "afterRemove": "scripts/deb/after-remove.sh"
     },
     "rpm": {
-      "depends": ["hidapi", "libusb1", "dfu-util"]
+      "depends": ["hidapi", "libusb1", "dfu-util"],
+      "afterInstall": "scripts/rpm/after-install.sh",
+      "afterRemove": "scripts/rpm/after-remove.sh"
     },
     "pacman": {
       "depends": [
