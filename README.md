@@ -113,7 +113,9 @@ On macOS 26.4.1+ the app may successfully open the configurator HID interface an
 
 ## Udev Rules
 
-The Azeron device communicates via HID, which requires permission to access `/dev/hidraw*`. If you installed via `makepkg -si`, the udev rules are already in place. Otherwise, install them manually:
+The Azeron device communicates via HID, which requires permission to access `/dev/hidraw*`. If you installed via `makepkg -si` (AUR), `dpkg -i` (`.deb`), or `dnf install` / `rpm -i` (`.rpm`), the udev rules are installed automatically by the package's post-install hook. **Re-plug your Azeron device** for the rules to take effect.
+
+For the AppImage or a from-source build, install them manually:
 
 ```bash
 sudo cp assets/99-azeron.rules /etc/udev/rules.d/
