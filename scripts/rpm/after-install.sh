@@ -1,9 +1,9 @@
 #!/bin/bash
-# .deb postinst — combines electron-builder's default linux postinst
+# .rpm postinstall — combines electron-builder's default linux postinst
 # (update-alternatives symlink, chrome-sandbox SUID, mime/desktop database
 # refresh) with the Azeron-specific udev rule install. Variables in
 # ${...} are substituted by electron-builder before this script lands in
-# the .deb (see node_modules/app-builder-lib/templates/linux/after-install.tpl).
+# the .rpm (see node_modules/app-builder-lib/templates/linux/after-install.tpl).
 
 # --- electron-builder default ---------------------------------------------
 
