@@ -203,7 +203,7 @@ jobs:
             output/azeron-software-*
 
       - name: Publish to AUR
-        uses: KSXGitHub/github-actions-deploy-aur@v3
+        uses: KSXGitHub/github-actions-deploy-aur@v4.1.3
         with:
           pkgname: azeron-software
           pkgbuild: ./PKGBUILD
@@ -213,7 +213,9 @@ jobs:
           commit_message: "Update to v${{ needs.build-linux.outputs.version }}"
 
       - name: Update Homebrew cask
-        if: needs.build-macos.result == 'success'
+        # always() so a failure in the AUR-publish step doesn't skip the cask
+        # update — the two outputs are independent of each other.
+        if: always() && needs.build-macos.result == 'success'
         run: |
           VERSION="${{ needs.build-linux.outputs.version }}"
           MAC_ZIP="output/azeron-software-${VERSION}-arm64-mac.zip"
