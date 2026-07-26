@@ -1,6 +1,6 @@
 cask "azeron-software" do
   version "1.5.6"
-  sha256 "ca50e40811be513b40271dd5a3d958d1de2778197a1d1f097afc62864ea64700"
+  sha256 "3da5de9ae570ecd293c29b3c5c02bf8f1e8d1884cc00c7f7c8213b10eafcc912"
 
   url "https://github.com/renatoi/azeron-linux/releases/download/v#{version}/azeron-software-#{version}-arm64-mac.zip"
   name "Azeron Software"
