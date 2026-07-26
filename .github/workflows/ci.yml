@@ -46,7 +46,7 @@ jobs:
 
       - name: Install and rebuild node-hid
         run: |
-          cd app && npm install node-hid@2.2.0 && cd ..
+          cd app && npm install --ignore-scripts node-hid@2.2.0 && cd ..
           npx @electron/rebuild -f -w node-hid -m app -v 30.0.9
 
       - name: Apply patches
