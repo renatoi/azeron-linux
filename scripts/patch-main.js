@@ -371,6 +371,20 @@ patch(
   );
 }
 
+// Patch 12c: Register the opened HID handle for shutdown cleanup (issue #23)
+// By the time this runs, i.close() is the full teardown chain built by the
+// earlier patches: XInput drain stopPoll/release/close (10c) and the async
+// writer fd close (12b), ending in node-hid's own close. Keeping a global
+// reference lets the window-all-closed handler (patch 13) run that chain
+// before the process dies, so the firmware isn't left mid-stream.
+// NOTE: must run after 10c and 12b so their search strings still match.
+patch(
+  "register-hid-for-shutdown",
+  'ys.info("HID Being opened!")',
+  '(globalThis.__azHid=i),ys.info("HID Being opened!")',
+  { platforms: ["linux"] }
+);
+
 // Patch 13: Quit app when all windows are closed (Linux convention)
 // The app has no "window-all-closed" handler, so it keeps running after the window closes.
 // On Linux, node-hid's read thread does a blocking read() on hidraw. During shutdown,
@@ -378,10 +392,42 @@ patch(
 // No JS-level exit (app.quit, process.exit, etc.) can avoid this because the read
 // thread blocks the event loop. Fix: spawn a detached "kill -9" process which
 // bypasses the blocked event loop entirely. The kernel releases all fds on death.
+//
+// Opt-in graceful path (issue #23): with AZERON_GRACEFUL_CLOSE=1, run the
+// registered device cleanup chain first so the XInput drain is stopped,
+// Interface 0 released, and the hidraw fds closed before the process dies.
+// The kill is scheduled BEFORE the cleanup runs, as a detached
+// `sh -c "sleep <s>; kill -9 <pid>"`: an external process still fires if a
+// cleanup call blocks the event loop, where a setTimeout would never run.
+// Deadline is 250 ms, tunable via AZERON_GRACEFUL_CLOSE_MS for bisecting.
+//
+// Readable source for the graceful branch:
+//
+//   if (process.env.AZERON_GRACEFUL_CLOSE === "1") {
+//     var _ms = Number(process.env.AZERON_GRACEFUL_CLOSE_MS) || 250;
+//     require("child_process").spawn(
+//       "sh", ["-c", "sleep " + _ms / 1000 + "; kill -9 " + process.pid],
+//       { detached: true, stdio: "ignore" }
+//     ).unref();
+//     try {
+//       globalThis.__azHid && globalThis.__azHid.close();
+//     } catch (e) {
+//       try { ys.error("graceful close error: " + e.message); } catch (_e) {}
+//     }
+//   } else { ...existing immediate kill -9... }
+//
 patch(
   "fix-quit-on-window-close",
   'e.app.on("quit"',
-  'e.app.on("window-all-closed",(()=>{require("child_process").spawn("kill",["-9",String(process.pid)],{detached:true,stdio:"ignore"}).unref()})),e.app.on("quit"',
+  'e.app.on("window-all-closed",(()=>{'
+    + 'if(process.env.AZERON_GRACEFUL_CLOSE==="1"){'
+    +   'var _ms=Number(process.env.AZERON_GRACEFUL_CLOSE_MS)||250;'
+    +   'require("child_process").spawn("sh",["-c","sleep "+_ms/1e3+"; kill -9 "+process.pid],{detached:true,stdio:"ignore"}).unref();'
+    +   'try{globalThis.__azHid&&globalThis.__azHid.close()}catch(e){try{ys.error("graceful close error: "+e.message)}catch(_e){}}'
+    + '}else{'
+    +   'require("child_process").spawn("kill",["-9",String(process.pid)],{detached:true,stdio:"ignore"}).unref()'
+    + '}'
+    + '})),e.app.on("quit"',
   { platforms: ["linux"] }
 );
 
