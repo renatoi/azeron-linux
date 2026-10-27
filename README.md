@@ -91,7 +91,11 @@ This builds and installs the package in one step. It also installs udev rules au
 
 ### Option F: Homebrew (macOS, Apple Silicon)
 
+The cask lives in this repository (not in a `homebrew-azeron-linux` repo), so the tap needs the explicit URL, and recent Homebrew versions require trusting third-party taps before loading their casks:
+
 ```bash
+brew tap renatoi/azeron-linux https://github.com/renatoi/azeron-linux
+brew trust --cask renatoi/azeron-linux/azeron-software
 brew install --cask renatoi/azeron-linux/azeron-software
 ```
 
@@ -110,6 +114,17 @@ The app communicates with the Azeron over HID, which requires the **Input Monito
 #### Known issue: macOS 26 (Tahoe) and later
 
 On macOS 26.4.1+ the app may successfully open the configurator HID interface and write commands to the device, but never receive responses, leaving it stuck on **"select your device"**. The kernel processes input reports (visible as `InputReportCount` climbing in `ioreg -c IOHIDDevice -l`), but `hidapi`'s input-report callback does not deliver them to user space — affects both `node-hid@2.x` (NAN) and `node-hid@3.x` (N-API). See [issue #21](https://github.com/renatoi/azeron-linux/issues/21) for the diagnosis. A fix requires an `hidapi-mac` upstream change. As an interim workaround, run the Windows software through CrossOver / Parallels to configure the device — profiles persist on the keypad's onboard memory.
+
+#### Known issue: keypads shipping with firmware v109+ (Azeron Software 2.x)
+
+Azeron has moved to **Azeron Software 2.x**, published on a new feed (`https://azeron-software-public.s3.us-east-1.amazonaws.com/live/latest.yml`, v2.0.3 at the time of writing). The old feed this project tracks (`keypad-builds/latest.yml`) still reports 1.5.6. Software 1.5.6 knows Cyborg II firmware only up to **v100**, while recent keypads ship with newer firmware (v109–v112 are bundled with 2.0.3). With such a keypad, 1.5.6:
+
+- shows profiles as **read-only** ("Current keypad firmware is not compatible with this software version");
+- offers **"Installed: V111 / Available: V100"** in the firmware dialog. That "update" is a **downgrade**: do not accept it.
+
+#### Known issue: firmware updates on macOS
+
+The app runs `dfu-util` from `azeron-software.app/Contents/firmware/dfu-util` (it does not search the `PATH`), and the macOS `.zip` does not bundle it there, so a Homebrew-installed `dfu-util` is not picked up. Observed on macOS 27.2 with a Cyborg II: starting a firmware update put the keypad into the STM32 DFU bootloader, nothing was flashed, and the keypad came back in normal mode about a minute later with its original firmware.
 
 ## Udev Rules
 
